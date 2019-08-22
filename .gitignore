@@ -1,0 +1,9 @@
+*.pyc
+*.pyo
+*~
+.DS_Store
+.DS_Store?
+._*
+*.ipynb_checkpoints*
+*xtra_*
+*.json
