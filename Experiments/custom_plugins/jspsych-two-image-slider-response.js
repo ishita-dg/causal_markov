@@ -132,6 +132,7 @@ jsPsych.plugins['two-image-slider-response'] = (function() {
         default: null,
         description: 'How long to hide the stimulus.'
       },
+      
       trial_duration: {
         type: jsPsych.plugins.parameterType.INT,
         pretty_name: 'Trial duration',
