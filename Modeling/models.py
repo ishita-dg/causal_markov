@@ -105,7 +105,7 @@ class MLP_disc(nn.Module):
         
         return
     
-    def test (self, data, sg_epoch, N_trials, nft = True, name = None):
+    def test (self, data, sg_epoch, nft = True, name = None):
 
         count = 0.0
         pred = []
@@ -114,7 +114,7 @@ class MLP_disc(nn.Module):
         orig = copy.deepcopy(self)
         
         for x, lj in zip(data["X"], data["log_joint"]):
-            if not (count)%(N_trials * 25) : print("Testing, ", count/N_trials)
+            if not (count)%(25) : print("Testing, ", count)
             
             if (not datapoint.keys() or nft):
                 datapoint = {"X": x.view(1, -1),
@@ -122,11 +122,6 @@ class MLP_disc(nn.Module):
             else:
                 datapoint["X"] = torch.cat((datapoint["X"], x.view(1, -1)), 0)
                 datapoint["log_joint"] = torch.cat((datapoint["y_log_joint"], lj.view(1, -1)), 0)
-
-            #if (not count%N_trials):
-                #self = copy.deepcopy(orig)
-                #datapoint = {}
-            #else:
             if sg_epoch > 0:
                 self.train(datapoint, sg_epoch, verbose = False)
             else:
@@ -150,35 +145,30 @@ class MLP_disc(nn.Module):
 
 class CommEffRational():
         
-    def __init__(self, N_trials):
-        self.N_t = N_trials
-        self.mus = []
+    def __init__(self):
         return
     
-    def pred_loglik(self, draw, lik, N):
-        '''
-        TODO: Ensure that NU has the right lik convention
-        '''
-        if draw > -0.5:
-            N += (2*draw - 1)
-        if (N == 0):
-            return(np.array([0.0, 0.0]))
-        sign = (int(N/np.abs(N)) + 1.0)/2.0
-        likl = sign*lik.astype('float64') + (1-sign)*(1.0 - lik.astype('float64'))
-        likl = (likl)**abs(N)
-        return np.log(likl)
+    def noisy_or(self, A_state, AC, B_state, BC, C_pr):
+        P_no_C = (1.0 - C_pr)*((1.0 - AC)**A_state)*((1.0 - BC)**B_state)
+        return 1.0 - P_no_C
     
-    def pred_logprior(self, pri, N):
-        p0 = pri
-        return np.log(np.clip(np.array([1.0 - p0, p0]), 0.0001, 0.9999))
-    
-    def log_joint(self, draw, lik, pri, N):
-        return self.pred_loglik(draw, lik, N) + self.pred_logprior(pri, N)
+    def log_joint(self, A_pr, AC, B_pr, BC, C_pr, A_state, B_state, C_state):
+        #print("***********")
+        #print(A_state, B_state, C_state)
+        P_A = A_pr*A_state + (1.0 - A_pr)*(1.0 - A_state)
+        #print(P_A)
+        P_B = B_pr*B_state + (1.0 - B_pr)*(1.0 - B_state)
+        #print(P_B)
+        C_post = self.noisy_or(A_state, AC, B_state, BC, C_pr)
+        #print(C_post)
+        P_C_AB = C_post*C_state + (1.0 - C_post)*(1.0 - C_state)
+        logP = np.log(P_A) + np.log(P_B) + np.log(P_C_AB)
+        lognotP = np.log(1.0 - np.exp(logP))
+        #print(np.exp(logP))
+        return np.array([logP, lognotP])
         
-    def pred_post(self, draw, lik, pri, N):
-        # draw is 0 if col is one that is more un urn 0
-        # lik if the prob of col 0 in urn 0
-        p = self.log_joint(draw, lik, pri, N)
+    def pred_post(self, A_pr, AC, B_pr, BC, C_pr, A_state, B_state, C_state):
+        p = self.log_joint(A_pr, AC, B_pr, BC, C_pr, A_state, B_state, C_state)
         p = p.astype('float64')
         return np.exp(p)/sum(np.exp(p))
     
@@ -191,11 +181,9 @@ class CommEffRational():
 
         for x in data["X"]:
             count += 1                
-            draw, lik1, lik2, pri, N_ratio, _ = x.numpy()
-            N = N_ratio*self.N_t
-            lik = np.array([lik1, lik2])
-            preds.append(self.pred_post(draw, lik, pri, N))
-            ljs.append(self.log_joint(draw, lik, pri, N))
+            A_pr, AC, B_pr, BC, C_pr, A_state, B_state, C_state = x.numpy()
+            preds.append(self.pred_post(A_pr, AC, B_pr, BC, C_pr, A_state, B_state, C_state))
+            ljs.append(self.log_joint(A_pr, AC, B_pr, BC, C_pr, A_state, B_state, C_state))
         
         pred0 = torch.from_numpy(np.array(preds)).view(-1,2)
         data["y_hrm"] = pred0.type(torch.DoubleTensor)
@@ -213,13 +201,10 @@ class CommEffRational():
         preds = []
         ljs = []
         
-        for x in data["X"]:
-            draw, lik1, lik2, pri, N_ratio, _ = x.numpy()
-            N = N_ratio*self.N_t
-            lik = np.array([lik1, lik2])
-            pred = self.pred_post(draw, lik, pri, N)
-            preds.append(pred)
-            ljs.append(self.log_joint(draw, lik, pri, N))
+        for x in data["X"]:                           
+            A_pr, AC, B_pr, BC, C_pr, A_state, B_state, C_state = x.numpy()
+            preds.append(self.pred_post(A_pr, AC, B_pr, BC, C_pr, A_state, B_state, C_state))
+            ljs.append(self.log_joint(A_pr, AC, B_pr, BC, C_pr, A_state, B_state, C_state))
             
         pred0 = torch.from_numpy(np.array(preds)).view(-1,2)
         data["y_hrm"] = pred0.type(torch.DoubleTensor)
@@ -233,27 +218,9 @@ class CommEffRational():
 
 class CommCauseRational():
         
-    def __init__(self, N_trials):
-        self.N_t = N_trials
-        self.mus = []
+    def __init__(self):
         return
     
-    def pred_loglik(self, draw, lik, N):
-        '''
-        TODO: Ensure that NU has the right lik convention
-        '''
-        if draw > -0.5:
-            N += (2*draw - 1)
-        if (N == 0):
-            return(np.array([0.0, 0.0]))
-        sign = (int(N/np.abs(N)) + 1.0)/2.0
-        likl = sign*lik.astype('float64') + (1-sign)*(1.0 - lik.astype('float64'))
-        likl = (likl)**abs(N)
-        return np.log(likl)
-    
-    def pred_logprior(self, pri, N):
-        p0 = pri
-        return np.log(np.clip(np.array([1.0 - p0, p0]), 0.0001, 0.9999))
     
     def log_joint(self, draw, lik, pri, N):
         return self.pred_loglik(draw, lik, N) + self.pred_logprior(pri, N)

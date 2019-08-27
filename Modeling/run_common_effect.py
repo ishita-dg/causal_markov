@@ -18,29 +18,27 @@ import json
 if len(sys.argv) > 1:
   total_part = int(sys.argv[1])
 else:
-  total_part = 20
+  total_part = 10
 
 hrms = []
-ams = []
+P_ams = []
+N_ams = []
+all_queries = []
 
 for part_number in np.arange(total_part):
   print("Participant number, ", part_number)
   
   # Modify in the future to read in / sysarg
   config = {'N_part' : part_number,
-            'optimization_params': {'train_epoch': 50,
+            'optimization_params': {'train_epoch': 3,
                                    'test_epoch': 0,
                                    'L2': 0.0,
-                                   'train_lr': 0.007,
+                                   'train_lr': 0.02,
                                    'test_lr' : 0.0},
-            'network_params': {'NHID': 1,
+            'network_params': {'NHID': 3,
                                'NONLIN' : 'rbf'},
-            'N_balls' : 20,
-            'alpha_pre' : 1.0, 
-            'train_blocks' : 200,
-            'N_trials' : 4}
+            'train_blocks' : 200}
   
-  # Run results for Correction Prior (CP)
   
   expt = generative_causal.CommEff()
   expt_name = "Common_effect"
@@ -48,13 +46,9 @@ for part_number in np.arange(total_part):
   
   # Parameters for generating the training data
   
-  N_trials = config['N_trials']
-  
   train_blocks = config['train_blocks']
   test_blocks = 200
   N_blocks = train_blocks + test_blocks
-  
-  N_balls = config['N_balls']
   
   # Optimization parameters
   train_epoch = config['optimization_params']['train_epoch']
@@ -63,125 +57,120 @@ for part_number in np.arange(total_part):
   train_lr = config['optimization_params']['train_lr']
   test_lr = config['optimization_params']['test_lr']
   
-  # Network parameters -- single hidden layer MLP
-  # Can also adjust the nonlinearity
+  # Network parameters
   OUT_DIM = 2
-  INPUT_SIZE = 5 #data, lik1, lik2, prior, N
+  INPUT_SIZE = 8 # A_pr, AC, B_pr, BC, C_pr, A_state, B_state, C_state
   NHID = config['network_params']['NHID']
   NONLIN = config['network_params']['NONLIN']
   
   storage_id = utils.make_id(config)
   
-  # Informative data vs uninformative data
+  # positive correlation vs negative correlation
   
-  approx_model = expt.get_approxmodel(OUT_DIM, INPUT_SIZE, NHID, NONLIN)
-  rational_model = expt.get_rationalmodel(N_trials) 
+  P_approx_model = expt.get_approxmodel(OUT_DIM, INPUT_SIZE, NHID, NONLIN)
+  N_approx_model = expt.get_approxmodel(OUT_DIM, INPUT_SIZE, NHID, NONLIN)
   
-  train_block_vals =  expt.assign_PL_CP(train_blocks, N_balls, alpha_post = 0.27, alpha_pre = config['alpha_pre'])
-  train_X = expt.data_gen(train_block_vals, N_trials, N_balls)
-  test_block_vals =  expt.assign_PL_CP(test_blocks, N_balls, alpha_post = 0.27, alpha_pre = config['alpha_pre'])
-  test_X = expt.data_gen(test_block_vals, N_trials)
+  rational_model = expt.get_rationalmodel() 
+  
+  N_train_params =  expt.assign_params(train_blocks, condition = 'neg_corr', corr = 0.9)
+  P_train_params =  expt.assign_params(train_blocks, condition = 'pos_corr', corr = 0.9)
+  test_params =  expt.assign_params(test_blocks, condition = 'control', corr = None)
+  
+  queries = np.random.binomial(1, 0.5, size = (N_blocks, 3))
+  
+  P_train_X = np.hstack((P_train_params, queries[:train_blocks]))
+  P_train_X = torch.from_numpy(P_train_X)
+  P_train_X = P_train_X.type(torch.FloatTensor)  
+  
+  N_train_X = np.hstack((N_train_params, queries[:train_blocks]))
+  N_train_X = torch.from_numpy(N_train_X)
+  N_train_X = N_train_X.type(torch.FloatTensor)  
+  
+  test_X = np.hstack((test_params, queries[train_blocks:]))
+  test_X = torch.from_numpy(test_X)
+  test_X = test_X.type(torch.FloatTensor)  
+  
   
   # Create the data frames
-  train_data = {'X': train_X,
+  P_train_data = {'X': P_train_X,
                 'log_joint': None,
                 'y_hrm': None,
                 'y_am': None,
                 }
   
+  N_train_data = {'X': N_train_X,
+                'log_joint': None,
+                'y_hrm': None,
+                'y_am': None,
+                }
   
-  test_data = {'X': test_X,
+  P_test_data = {'X': test_X,
                'y_hrm': None,
                'y_am': None,
                }
   
+  N_test_data = {'X': test_X,
+                 'y_hrm': None,
+                 'y_am': None,
+                 }
   
   # training models
-  train_data = rational_model.train(train_data)
-  approx_model.optimizer = optim.SGD(approx_model.parameters(), 
+  P_train_data = rational_model.train(P_train_data)
+  
+  P_approx_model.optimizer = optim.SGD(P_approx_model.parameters(), 
                                         lr=train_lr, 
                                         weight_decay = L2)
-  approx_model.train(train_data, train_epoch)
-  #utils.save_model(approx_model, name = storage_id + 'trained_model')
+  P_approx_model.train(P_train_data, train_epoch)
   
-  # testing models
-  test_data = rational_model.test(test_data)
-  approx_model.optimizer = optim.SGD(approx_model.parameters(), 
-                                        lr=test_lr)
-  test_data = approx_model.test(test_data, test_epoch, N_trials)
-  #utils.save_model(approx_model, name = storage_id + 'tested_model')
-  
-  for key in test_data:
-    if type(test_data[key]) is torch.FloatTensor:
-      test_data[key] = test_data[key].numpy()
-    else:
-      test_data[key] = np.array(test_data[key])
-      
-  #utils.save_data(test_data, name = storage_id + 'test_data')
-  if True :
-    hrms.append(test_data['y_hrm'][:, 1])
-    ams.append(test_data['y_am'][:, 1])
-  else:
-    print("**********reject this participant")
-  
-  
-ams = np.reshape(np.array(ams), (-1))
-hrms = np.reshape(np.array(hrms), (-1))
-which_urn = np.random.binomial(1, 0.5, ams.shape)
-ams = ams*which_urn + (1 - which_urn)*(1.0 - ams)
-hrms = hrms*which_urn + (1 - which_urn)*(1.0 - hrms)
 
-notnan = np.logical_not(np.isnan(ams))
-ams = ams[notnan]
-hrms = hrms[notnan]
-
-# Plotting
-f, (ax1, ax2) = plt.subplots(1, 2)
-jump = 0.05
-bins = np.arange(0.0, 1.0, jump)
-x0 = bins + jump/2.0
-p_x = np.arange(-0.1, 1.1, jump)
-Y_means = []
-Y_vars = []
-x = []
-digitized = np.digitize(hrms, bins)
-for d in np.arange(len(bins)):
-  if not np.isnan(np.mean(ams[digitized == d+1])):
-    Y_means.append(np.mean(ams[digitized == d+1]))
-    Y_vars.append(np.var(ams[digitized == d+1]))
-    x.append(x0[d])
-
-x = np.array(x)
-ax1.scatter(x, Y_means, label = 'Beta = 0.27')
-#ax1.scatter(hrms, ams)
-ax1.set_xlim([-0.1, 1.1])
-ax1.set_ylim([-0.1, 1.1])
-ax1.plot([0.0, 1.0], [0.0, 1.0], c = 'k')
-ax1.axvline(0.5, c = 'k')
-ax1.set_title("Conservatism effect")
-
-cons_fit_params = np.polyfit(x, Y_means, 1)
-cons_fit = np.poly1d(cons_fit_params)
-ax1.plot(p_x, cons_fit(p_x), c = 'r')
-
-ax2.scatter(x, Y_vars, label = 'Beta = 0.27')
-ax2.set_title("Variance effect")
-
-var_fit_params = np.polyfit(x, Y_vars, 2)
-var_fit = np.poly1d(var_fit_params)
-ax2.plot(p_x, var_fit(p_x), c = 'r')
-ax2.plot(p_x, np.mean(Y_vars)*np.ones(len(p_x)), linestyle = ':')
-
-#plt.legend()
-plt.show()
-plt.savefig('figs/Conservatism_' + storage_id +'.pdf')
+  N_train_data = rational_model.train(N_train_data)
+  N_approx_model.optimizer = optim.SGD(N_approx_model.parameters(), 
+                                        lr=train_lr, 
+                                        weight_decay = L2)
+  N_approx_model.train(N_train_data, train_epoch)
     
+  # testing models
+  P_test_data = rational_model.test(P_test_data)
+  
+  P_approx_model.optimizer = optim.SGD(P_approx_model.parameters(), 
+                                        lr=test_lr)
+  P_test_data = P_approx_model.test(P_test_data, test_epoch)
+    
+  for key in P_test_data:
+    if type(P_test_data[key]) is torch.FloatTensor:
+      P_test_data[key] = P_test_data[key].numpy()
+    else:
+      P_test_data[key] = np.array(P_test_data[key])  
 
-plot_data = {'x': x,
-             'var': np.array(Y_vars),
-             'mean': np.array(Y_means),
-             'all_ams': ams,
-             'all_hrms': hrms}
+ 
+  N_test_data = rational_model.test(N_test_data)
+  
+  N_approx_model.optimizer = optim.SGD(N_approx_model.parameters(), 
+                                        lr=test_lr)
+  N_test_data = N_approx_model.test(N_test_data, test_epoch)
+    
+  for key in N_test_data:
+    if type(N_test_data[key]) is torch.FloatTensor:
+      N_test_data[key] = N_test_data[key].numpy()
+    else:
+      N_test_data[key] = np.array(N_test_data[key])  
+
+
+  hrms.append(P_test_data['y_hrm'][:, 0])
+  P_ams.append(P_test_data['y_am'][:, 0])
+  N_ams.append(N_test_data['y_am'][:, 0])
+  query_index = np.sum(np.array([1, 2, 4])*P_test_data['X'][:, -3:], axis = 1)
+  all_queries.append(query_index)
+  
+P_ams = np.reshape(np.array(P_ams), (-1))
+N_ams = np.reshape(np.array(N_ams), (-1))
+all_queries = np.reshape(np.array(all_queries), (-1))
+hrms = np.reshape(np.array(hrms), (-1))
+
+plot_data = {'P_ams': P_ams,
+             'N_ams': N_ams,
+             'hrms': hrms,
+             'q': all_queries}
 
 utils.save_data(plot_data, name = storage_id + 'plot_data')
         

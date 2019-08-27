@@ -16,7 +16,7 @@ reload(models)
 torch.manual_seed(1)
 
 
-class CBN ():
+class CBN():
     
     @staticmethod
     def Exact_VI_loss_function(yval, target):
@@ -91,131 +91,67 @@ class CBN ():
     
     def get_approxmodel(self, NUM_LABELS, INPUT_SIZE, nhid, nonlin, stronginit = False):
         
-        return models.MLP_disc(INPUT_SIZE, NUM_LABELS, nhid, None, Causal.VI_loss_function_grad, nonlin, stronginit)
+        return models.MLP_disc(INPUT_SIZE, NUM_LABELS, nhid, None, CBN.VI_loss_function_grad, nonlin, stronginit)
     
     
         #return models.MLP_disc(INPUT_SIZE, 2, nhid, loss_function = nn.KLDivLoss())
         
         
-class CommEff(CBN):
-    
-    def data_gen(self, block_vals, N_trials, fixed = False, same_urn = False, return_urns = False, variable_ss = None):
-        
-        '''
-        TODO: Change to noisy_or
-        '''
-        ps, l1s, l2s = block_vals
-        
-        N_blocks = len(ps)        
-    
-        draws = np.empty(shape = (N_trials*N_blocks, 1))
-        lik1s = np.empty(shape = (N_trials*N_blocks, 1))
-        lik2s = np.empty(shape = (N_trials*N_blocks, 1))
-        pris = np.empty(shape = (N_trials*N_blocks, 1))
-        Ns = np.empty(shape = (N_trials*N_blocks, 1))
-        true_urns = np.empty(shape = (N_trials*N_blocks))
-        
-        
-        for i, (p,l1,l2) in enumerate(zip(ps, l1s, l2s)):
-            
-            if same_urn:
-                urn_b = np.random.binomial(1, p, 1)*np.ones(N_trials)
-            else:
-                urn_b = np.random.binomial(1, p, N_trials)
-             
-            draws_b = []
-            delNs = [0]
-            delN = 0
-            for urn in urn_b:
-                if urn:
-                    lik = l1
-                else:
-                    lik = l2
-                
-                if variable_ss is not None:                        
-                    draws_b.append(0.0)
-                    heads = np.random.binomial(variable_ss[i], lik, 1)
-                    tails = variable_ss[i] - heads
-                    delN = (heads - tails)[0]
-                    delNs.append(delN)            
-                        
-                else:
-                    draw = np.random.binomial(1, lik, 1)
-                    draws_b.append(draw)
-                    #success = draw*(1-urn) + (1-draw)*urn
-                    if same_urn:
-                        delN += (2*draw - 1)[0]
-                    else:
-                        delN = 0
-                    delNs.append(delN)
-            
-            
-            if fixed: draws_b = np.ones(N_trials)
-            delNs = np.array(delNs, dtype = np.float)
-            if variable_ss is not None:
-                if variable_ss[i] == 0:
-                    Ns[i*N_trials : (i+1)*N_trials, 0] = 0.0
-                else: 
-                    Ns[i*N_trials : (i+1)*N_trials, 0] = delNs[1]/variable_ss[i]
-            else:
-                Ns[i*N_trials : (i+1)*N_trials, 0] = 1.0*delNs[:-1] / N_trials              
-            draws[i*N_trials : (i+1)*N_trials, 0] = draws_b
-            lik1s[i*N_trials : (i+1)*N_trials, 0] = l1 * np.ones(N_trials)
-            lik2s[i*N_trials : (i+1)*N_trials, 0] = l2 * np.ones(N_trials)            
-            pris[i*N_trials : (i+1)*N_trials, 0] = p * np.ones(N_trials)
-            true_urns[i*N_trials : (i+1)*N_trials] = urn_b
-            
-        
-        if variable_ss is not None:
-            normalized_ss = 1.0*variable_ss / max(variable_ss)
-            X = np.hstack((draws, lik1s, lik2s, pris, Ns, 
-                           normalized_ss.reshape((-1, 1))
-                           ))
-        else:
-            X = np.hstack((draws, lik1s, lik2s, pris, Ns, np.ones(shape = (N_trials*N_blocks, 1))))
-        X = torch.from_numpy(X)
-        X = X.type(torch.FloatTensor)
-        
-        
-        
-        if return_urns:
-            return X, true_urns
-        
-        return X
-            
+class CommEff(CBN):   
 
-   
-
-    def assign_PL_CP(self, N_blocks, N_balls, alpha_post, alpha_pre):
+    def assign_params(self, N_trials, condition, corr = 0.8):
+        strengths = np.array([0.2, 0.5, 0.8])
+        #strengths = np.array([0.49, 0.5, 0.51])
+        p0 = np.array([0.33, 0.34, 0.33])
+        C_pr = 0.1*np.ones(N_trials)
         
+        if condition == 'control':
+            strengths = np.array([0.49, 0.5, 0.51])
+            A_pr = np.random.choice(strengths, N_trials)
+            B_pr = np.random.choice(strengths, N_trials)
+            AC = np.random.choice(strengths, N_trials)
+            BC = np.random.choice(strengths, N_trials)
             
-        posts = np.random.beta(alpha_post, alpha_post, N_blocks)
-        pres = np.random.beta(alpha_pre, alpha_pre, N_blocks)#0.5*np.ones(N_blocks)
-        priors = []
-        likls = []
-        
-        for pre, post in zip(pres, posts):
-            if np.abs(pre - post) > 0.5:
-                pre = 1.0 - pre
-            x = (post*(1.0 - pre))/(pre*(1.0 - post))
-            edit = x / (1.0 + x)
-            
-            ep = np.clip(np.round(edit*N_balls), 1, N_balls - 1)
-            pp = np.clip(np.round(pre*N_balls), 1, N_balls - 1)
-            if (np.random.uniform() > 0.0):
-                priors.append(pp*1.0 / N_balls)
-                likls.append([ep*1.0 / N_balls, 1.0 - ep*1.0 / N_balls])
-            else:
-                priors.append(ep*1.0 / N_balls)
-                likls.append([pp*1.0 / N_balls, 1.0 - pp*1.0 / N_balls])                
+        elif condition == 'pos_corr':
+            p = np.ones(3)*(1.0 - corr)/2.0
+            A_pr = np.random.choice(strengths, N_trials, p = p0)
+            AC = np.random.choice(strengths, N_trials, p = p0)
+            B_pr = []
+            BC = []
+            for t in np.arange(N_trials):
+                p_pr = p.copy()
+                p_pr[strengths == A_pr[t]] = corr
+                B_pr.append(np.random.choice(strengths, 1, p = p_pr))
                 
-        
-        return np.array(priors).reshape((-1,1)), np.array(likls).reshape((-1,2))[:, 0], np.array(likls).reshape((-1,2))[:, 1] 
+                p_C = p.copy()
+                p_C[strengths == AC[t]] = corr
+                BC.append(np.random.choice(strengths, 1, p = p_C))
+            B_pr = np.array(B_pr).squeeze()
+            BC = np.array(BC).squeeze()
+            
+        elif condition == 'neg_corr':
+            p = np.ones(3)*(corr)/2.0
+            A_pr = np.random.choice(strengths, N_trials, p = p0)
+            AC = np.random.choice(strengths, N_trials, p = p0)
+            B_pr = []
+            BC = []
+            for t in np.arange(N_trials):
+                p_pr = p.copy()
+                p_pr[strengths == A_pr[t]] = 1.0 - corr
+                B_pr.append(np.random.choice(strengths, 1, p = p_pr))
+                
+                p_C = p.copy()
+                p_C[strengths == AC[t]] = 1.0 - corr
+                BC.append(np.random.choice(strengths, 1, p = p_C))
+            B_pr = np.array(B_pr).squeeze()
+            BC = np.array(BC).squeeze()
     
-    
-    def get_rationalmodel(self, N_trials):
         
-        return models.CommEffRational(N_trials)
+        return np.vstack((A_pr, AC, B_pr, BC, C_pr)).T
+    
+    def get_rationalmodel(self):
+        
+        return models.CommEffRational()
     
 
 
