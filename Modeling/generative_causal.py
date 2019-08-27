@@ -108,15 +108,17 @@ class CommEff(CBN):
         p_r = np.array([0.1, 0.1, 0.8])
         p_l = np.array([0.8, 0.1, 0.1])
         p_m = np.array([0.2, 0.6, 0.2])
+        p_control = np.array([0.1, 0.8, 0.1])
         
-        self._params = (strengths, p0, p_r, p_l, p_m)
+        self._params = (p_control, p0, p_r, p_l, p_m)
         
         if condition == 'control':
-            strengths = np.array([0.499, 0.5, 0.501])
-            A_pr = np.random.choice(strengths, N_trials)
-            B_pr = np.random.choice(strengths, N_trials)
-            AC = np.random.choice(strengths, N_trials)
-            BC = np.random.choice(strengths, N_trials)
+            #strengths = np.array([0.499, 0.5, 0.501])
+            p0 = np.array([0.1, 0.8, 0.1])
+            A_pr = np.random.choice(strengths, N_trials, p = p0)
+            B_pr = np.random.choice(strengths, N_trials, p = p0)
+            AC = np.random.choice(strengths, N_trials, p = p0)
+            BC = np.random.choice(strengths, N_trials, p = p0)
             C_pr = 0.2*np.ones(N_trials)
             
         elif condition == 'pos_corr_AB':
@@ -227,17 +229,18 @@ class CommEff(CBN):
         
         return np.vstack((A_pr, AC, B_pr, BC, C_pr)).T
     
-    def find_probs(state, condition):
+    def find_probs(self, state, condition):
         '''
         Currently tailored to pos/neg corr
         '''
         i_A_pr, i_AC, i_B_pr, i_BC, i_C_pr = state
-        _, p0, p_r, p_l, p_m = self._params 
-        P_A_pr = p0[i_A_pr]
-        P_AC = p0[i_AC]
+        p_control, p0, p_r, p_l, p_m = self._params 
         
         
         if condition == 'pos_corr_AB':
+            P_A_pr = p0[i_A_pr]
+            P_AC = p0[i_AC]
+            
             if i_A_pr < 1: P_B_pr_A_pr = p_l[i_B_pr]
             if i_A_pr > 1: P_B_pr_A_pr = p_r[i_B_pr]
             if i_A_pr == 1: P_B_pr_A_pr = p_m[i_B_pr]
@@ -246,9 +249,27 @@ class CommEff(CBN):
             if i_AC > 1: P_BC_AC = p_r[i_BC]
             if i_AC == 1: P_BC_AC = p_m[i_BC]
             
-        P_C_pr = 0.2
+        elif condition == 'neg_corr_AB':
+            P_A_pr = p0[i_A_pr]
+            P_AC = p0[i_AC]
+            
+            if i_A_pr < 1: P_B_pr_A_pr = p_r[i_B_pr]
+            if i_A_pr > 1: P_B_pr_A_pr = p_l[i_B_pr]
+            if i_A_pr == 1: P_B_pr_A_pr = p_m[i_B_pr]
+            
+            if i_AC < 1: P_BC_AC = p_r[i_BC]
+            if i_AC > 1: P_BC_AC = p_l[i_BC]
+            if i_AC == 1: P_BC_AC = p_m[i_BC]   
+            
+        elif condition == 'control':
+            P_A_pr = p_control[i_A_pr]
+            P_AC = p_control[i_AC]
+            P_B_pr_A_pr = p_control[i_B_pr]
+            P_BC_AC = p_control[i_BC]
+            
+        P_C_pr = 1.0
         
-        prob = P_A_pr * P_AC * P_A_pr_B_pr * P_BC_AC * P_C_pr
+        prob = P_A_pr * P_AC * P_B_pr_A_pr * P_BC_AC * P_C_pr
         
         return prob
 

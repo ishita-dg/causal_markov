@@ -171,16 +171,21 @@ hrms = np.reshape(np.array(hrms), (-1))
 # find true prob distributions over states
 n_dist = []
 p_dist = []
-index = []
+test_dist = []
+#index = []
+
 for state0 in product([0,1,2], repeat=4):
+  state0 = tuple(np.asarray(state0)[::-1])
   state = state0 + (0,)
   p_dist.append(expt.find_probs(state, 'pos_corr_AB'))
   n_dist.append(expt.find_probs(state, 'neg_corr_AB'))
-  index.append(np.sum(np.array([1, 3, 9, 27])*np.asarray(state0), axis = 1))
+  test_dist.append(expt.find_probs(state, 'control'))
+  #index.append(np.sum(np.array([1, 3, 9, 27])*np.asarray(state0), axis = 0))
 
 n_dist = np.array(n_dist)
 p_dist = np.array(p_dist)
-index = np.array(index)
+test_dist = np.array(test_dist)
+#index = np.array(index)
   
 
 plot_data = {'P_ams': P_ams,
@@ -189,6 +194,7 @@ plot_data = {'P_ams': P_ams,
              'q': all_queries,
              'n_dist': n_dist,
              'p_dist': n_dist,
+             'test_dist': test_dist
              }
 
 utils.save_data(plot_data, name = storage_id + 'plot_data')
