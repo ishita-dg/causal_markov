@@ -13,37 +13,69 @@
     
      
   <script>
-  
-  function shuffle(o)
-        {
-        //Function to randomly shuffle an array:
-        //takes an array and returns an array of same length, but shuffled
-            for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
-            return o;
-        }
 
 
     /* create timeline */
     N_gs = 5
-    N_qs = 3
-    N_trials = N_gs * N_qs
+    N_qs = 2
+    train_trials = N_gs * N_qs
+    test_trials = 5
+    N_trials = test_trials + train_trials
     
-    var queries0 = shuffle(['Slide1', 'Slide2', 'Slide3', 'Slide4', 'Slide5', 'Slide6','Slide7', 'Slide8']);
-    var queries = [];
-    for (var i = 0; i < N_trials; i++) {
-          queries = queries.concat(queries0);
-          i = queries.length - 1;
-        }
-    queries = shuffle(queries).slice(start = 0, end = N_trials);
+    var condition = jsPsych.randomization.sampleWithReplacement(['poscorr', 'negcorr'], 1);
+    
+    console.log(condition)
+    
+    if (condition == 'poscorr'){
+    train_probs = [ 51.,   6.,   6.,   6.,   1.,   1.,   6.,   1.,   1.,   6.,  19.,
+         6.,   1.,   2.,   1.,   1.,   2.,   1.,   6.,   6.,  51.,   1.,
+         1.,   6.,   1.,   1.,   6.,   6.,   1.,   1.,  19.,   2.,   2.,
+         6.,   1.,   1.,   1.,   2.,   1.,   2.,   7.,   2.,   1.,   2.,
+         1.,   1.,   1.,   6.,   2.,   2.,  19.,   1.,   1.,   6.,   6.,
+         1.,   1.,   6.,   1.,   1.,  51.,   6.,   6.,   1.,   2.,   1.,
+         1.,   2.,   1.,   6.,  19.,   6.,   1.,   1.,   6.,   1.,   1.,
+         6.,   6.,   6.,  51.]
+    } else if (condition == 'negcorr'){
+    
+    train_probs = [  1.,   1.,   6.,   1.,   1.,   6.,   6.,   6.,  51.,   1.,   2.,
+         1.,   1.,   2.,   1.,   6.,  19.,   6.,   6.,   1.,   1.,   6.,
+         1.,   1.,  51.,   6.,   6.,   1.,   1.,   6.,   2.,   2.,  19.,
+         1.,   1.,   6.,   1.,   2.,   1.,   2.,   7.,   2.,   1.,   2.,
+         1.,   6.,   1.,   1.,  19.,   2.,   2.,   6.,   1.,   1.,   6.,
+         6.,  51.,   1.,   1.,   6.,   1.,   1.,   6.,   6.,  19.,   6.,
+         1.,   2.,   1.,   1.,   2.,   1.,  51.,   6.,   6.,   6.,   1.,
+         1.,   6.,   1.,   1.]
+    }
+    
+    test_probs = [   0.,    0.,    0.,    0.,    3.,    0.,    0.,    0.,    0.,
+          0.,    3.,    0.,    3.,   26.,    3.,    0.,    3.,    0.,
+          0.,    0.,    0.,    0.,    3.,    0.,    0.,    0.,    0.,
+          0.,    3.,    0.,    3.,   26.,    3.,    0.,    3.,    0.,
+          3.,   26.,    3.,   26.,  205.,   26.,    3.,   26.,    3.,
+          0.,    3.,    0.,    3.,   26.,    3.,    0.,    3.,    0.,
+          0.,    0.,    0.,    0.,    3.,    0.,    0.,    0.,    0.,
+          0.,    3.,    0.,    3.,   26.,    3.,    0.,    3.,    0.,
+          0.,    0.,    0.,    0.,    3.,    0.,    0.,    0.,    0.]
         
-    var graphs0 = shuffle(['Slide1', 'Slide2', 'Slide3']);
-    var graphs = [];
-    for (var i = 0; i < N_trials; i++) {
-          graphs = graphs.concat(graphs0);
-          i = graphs.length - 1;
+    var graphs0 = []    
+    for (var i = 1; i < 82; i++) {
+          graphs0 = graphs0.concat('Slide' + i);
+        }   
+    var train_graphs = jsPsych.randomization.sampleWithReplacement(graphs0, 500, train_probs).slice(start = 0, end = train_trials);
+    
+    var test_graphs = jsPsych.randomization.sampleWithReplacement(graphs0, 500, test_probs).slice(start = 0, end = test_trials);
+    
+    graphs = train_graphs.concat(test_graphs)
+    
+        
+    var queries0 = []    
+    for (var i = 1; i < 9; i++) {
+          queries0 = queries0.concat('Slide' + i);
         }
-    graphs = shuffle(graphs).slice(start = 0, end = N_trials);
 
+    var reps = 1 + N_trials / 8;
+    var queries = jsPsych.randomization.repeat(queries0, reps).slice(start = 0, end = N_trials);
+    
     var timeline = [];
 
     /* define welcome message trial */
@@ -90,9 +122,6 @@
     show_clickable_nav: true
     };
     
-    
-    timeline.push(instructions);
-
 
 
 
@@ -100,7 +129,7 @@
     
     for (var trial = 0; trial < N_trials; trial++){
     
-        var view_trial = {
+        var view_trial = { 
           type: "image-keyboard-response",
           stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
           stimulus_height: 300,
