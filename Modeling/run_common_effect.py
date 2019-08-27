@@ -73,9 +73,9 @@ for part_number in np.arange(total_part):
   
   rational_model = expt.get_rationalmodel() 
   
-  N_train_params =  expt.assign_params(train_blocks, condition = 'neg_corr_AB', corr = 0.9)
-  P_train_params =  expt.assign_params(train_blocks, condition = 'pos_corr_AB', corr = 0.9)
-  test_params =  expt.assign_params(test_blocks, condition = 'control', corr = 0.9)
+  N_train_params =  expt.assign_params(train_blocks, condition = 'neg_corr_AB')
+  P_train_params =  expt.assign_params(train_blocks, condition = 'pos_corr_AB')
+  test_params =  expt.assign_params(test_blocks, condition = 'control')
   
   queries = np.random.binomial(1, 0.5, size = (N_blocks, 3))
   
@@ -199,4 +199,8 @@ plot_data = {'P_ams': P_ams,
 
 utils.save_data(plot_data, name = storage_id + 'plot_data')
 
+plt.plot(n_dist)
+plt.plot(p_dist)
+plt.plot(test_dist)
+plt.show()
       

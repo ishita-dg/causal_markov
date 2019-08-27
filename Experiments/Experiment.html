@@ -21,30 +21,38 @@
     train_trials = N_gs * N_qs
     test_trials = 5
     N_trials = test_trials + train_trials
+    N_round_train = 5000
+    N_round_test = 500
     
     var condition = jsPsych.randomization.sampleWithReplacement(['poscorr', 'negcorr'], 1);
     
     console.log(condition)
     
     if (condition == 'poscorr'){
-    train_probs = [ 51.,   6.,   6.,   6.,   1.,   1.,   6.,   1.,   1.,   6.,  19.,
-         6.,   1.,   2.,   1.,   1.,   2.,   1.,   6.,   6.,  51.,   1.,
-         1.,   6.,   1.,   1.,   6.,   6.,   1.,   1.,  19.,   2.,   2.,
-         6.,   1.,   1.,   1.,   2.,   1.,   2.,   7.,   2.,   1.,   2.,
-         1.,   1.,   1.,   6.,   2.,   2.,  19.,   1.,   1.,   6.,   6.,
-         1.,   1.,   6.,   1.,   1.,  51.,   6.,   6.,   1.,   2.,   1.,
-         1.,   2.,   1.,   6.,  19.,   6.,   1.,   1.,   6.,   1.,   1.,
-         6.,   6.,   6.,  51.]
+    train_probs = [ 1024.,    32.,    16.,   128.,    96.,    16.,   128.,    32.,
+         128.,    32.,    24.,     4.,     4.,    72.,     4.,     4.,
+          24.,    32.,    16.,     4.,    16.,     2.,    12.,    16.,
+           2.,     4.,   128.,   128.,     4.,     2.,    16.,    12.,
+           2.,    16.,     4.,    16.,    96.,    72.,    12.,    12.,
+         216.,    12.,    12.,    72.,    96.,    16.,     4.,    16.,
+           2.,    12.,    16.,     2.,     4.,   128.,   128.,     4.,
+           2.,    16.,    12.,     2.,    16.,     4.,    16.,    32.,
+          24.,     4.,     4.,    72.,     4.,     4.,    24.,    32.,
+         128.,    32.,   128.,    16.,    96.,   128.,    16.,    32.,
+        1024.]
     } else if (condition == 'negcorr'){
     
-    train_probs = [  1.,   1.,   6.,   1.,   1.,   6.,   6.,   6.,  51.,   1.,   2.,
-         1.,   1.,   2.,   1.,   6.,  19.,   6.,   6.,   1.,   1.,   6.,
-         1.,   1.,  51.,   6.,   6.,   1.,   1.,   6.,   2.,   2.,  19.,
-         1.,   1.,   6.,   1.,   2.,   1.,   2.,   7.,   2.,   1.,   2.,
-         1.,   6.,   1.,   1.,  19.,   2.,   2.,   6.,   1.,   1.,   6.,
-         6.,  51.,   1.,   1.,   6.,   1.,   1.,   6.,   6.,  19.,   6.,
-         1.,   2.,   1.,   1.,   2.,   1.,  51.,   6.,   6.,   6.,   1.,
-         1.,   6.,   1.,   1.]
+    train_probs = [ 128.,    32.,   128.,    16.,    96.,   128.,    16.,    32.,
+        1024.,    32.,    24.,     4.,     4.,    72.,     4.,     4.,
+          24.,    32.,   128.,     4.,     2.,    16.,    12.,     2.,
+          16.,     4.,    16.,    16.,     4.,    16.,     2.,    12.,
+          16.,     2.,     4.,   128.,    96.,    72.,    12.,    12.,
+         216.,    12.,    12.,    72.,    96.,   128.,     4.,     2.,
+          16.,    12.,     2.,    16.,     4.,    16.,    16.,     4.,
+          16.,     2.,    12.,    16.,     2.,     4.,   128.,    32.,
+          24.,     4.,     4.,    72.,     4.,     4.,    24.,    32.,
+        1024.,    32.,    16.,   128.,    96.,    16.,   128.,    32.,
+         128.]
     }
     
     test_probs = [   0.,    0.,    0.,    0.,    3.,    0.,    0.,    0.,    0.,
@@ -61,9 +69,9 @@
     for (var i = 1; i < 82; i++) {
           graphs0 = graphs0.concat('Slide' + i);
         }   
-    var train_graphs = jsPsych.randomization.sampleWithReplacement(graphs0, 500, train_probs).slice(start = 0, end = train_trials);
+    var train_graphs = jsPsych.randomization.sampleWithReplacement(graphs0, N_round_train, train_probs).slice(start = 0, end = train_trials);
     
-    var test_graphs = jsPsych.randomization.sampleWithReplacement(graphs0, 500, test_probs).slice(start = 0, end = test_trials);
+    var test_graphs = jsPsych.randomization.sampleWithReplacement(graphs0, N_round_test, test_probs).slice(start = 0, end = test_trials);
     
     graphs = train_graphs.concat(test_graphs)
     
@@ -77,6 +85,7 @@
     var queries = jsPsych.randomization.repeat(queries0, reps).slice(start = 0, end = N_trials);
     
     var timeline = [];
+    
 
     /* define welcome message trial */
     var welcome = {
@@ -121,6 +130,8 @@
     ],
     show_clickable_nav: true
     };
+    
+    timeline.push(instructions);
     
 
 
