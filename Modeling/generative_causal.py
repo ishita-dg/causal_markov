@@ -99,58 +99,161 @@ class CBN():
         
 class CommEff(CBN):   
 
-    def assign_params(self, N_trials, condition, corr = 0.8):
+    def assign_params(self, N_trials, condition, corr = None):
         strengths = np.array([0.2, 0.5, 0.8])
         #strengths = np.array([0.49, 0.5, 0.51])
-        p0 = np.array([0.33, 0.34, 0.33])
-        C_pr = 0.1*np.ones(N_trials)
+        #p0 = np.array([0.33, 0.34, 0.33])
+        
+        p0 = np.array([0.4, 0.2, 0.4])
+        p_r = np.array([0.1, 0.1, 0.8])
+        p_l = np.array([0.8, 0.1, 0.1])
+        p_m = np.array([0.2, 0.6, 0.2])
+        
+        self._params = (strengths, p0, p_r, p_l, p_m)
         
         if condition == 'control':
-            strengths = np.array([0.49, 0.5, 0.51])
+            strengths = np.array([0.499, 0.5, 0.501])
             A_pr = np.random.choice(strengths, N_trials)
             B_pr = np.random.choice(strengths, N_trials)
             AC = np.random.choice(strengths, N_trials)
             BC = np.random.choice(strengths, N_trials)
+            C_pr = 0.2*np.ones(N_trials)
             
-        elif condition == 'pos_corr':
+        elif condition == 'pos_corr_AB':
+            A_pr = np.random.choice(strengths, N_trials, p = p0)
+            AC = np.random.choice(strengths, N_trials, p = p0)
+            B_pr = []
+            BC = []
+            for t in np.arange(N_trials):
+                
+                if A_pr[t] < 0.5: p_pr = p_l
+                if A_pr[t] > 0.5: p_pr = p_r
+                if A_pr[t] == 0.5: p_pr = p_m
+                B_pr.append(np.random.choice(strengths, 1, p = p_pr))
+                
+                
+                if AC[t] < 0.5: pC = p_l
+                if AC[t] > 0.5: pC = p_r
+                if AC[t] == 0.5: pC = p_m
+                BC.append(np.random.choice(strengths, 1, p = pC))
+                
+            B_pr = np.array(B_pr).squeeze()
+            BC = np.array(BC).squeeze()
+            C_pr = 0.2*np.ones(N_trials)
+            
+        elif condition == 'neg_corr_AB':
+            p0 = np.array([0.4, 0.2, 0.4])
+            A_pr = np.random.choice(strengths, N_trials, p = p0)
+            AC = np.random.choice(strengths, N_trials, p = p0)
+            B_pr = []
+            BC = []
+            for t in np.arange(N_trials):
+                
+                if A_pr[t] < 0.5: p_pr = p_r
+                if A_pr[t] > 0.5: p_pr = p_l
+                if A_pr[t] == 0.5: p_pr = p_m
+                B_pr.append(np.random.choice(strengths, 1, p = p_pr))
+                
+                
+                if AC[t] < 0.5: pC = p_r
+                if AC[t] > 0.5: pC = p_l
+                if AC[t] == 0.5: pC = p_m
+                BC.append(np.random.choice(strengths, 1, p = pC))
+                
+            B_pr = np.array(B_pr).squeeze()
+            BC = np.array(BC).squeeze()
+            C_pr = 0.2*np.ones(N_trials)
+            
+        elif condition == 'strong_link':
+            '''
+            Not complete
+            '''
             p = np.ones(3)*(1.0 - corr)/2.0
             A_pr = np.random.choice(strengths, N_trials, p = p0)
-            AC = np.random.choice(strengths, N_trials, p = p0)
-            B_pr = []
+            B_pr = np.random.choice(strengths, N_trials, p = p0)
+            AC = []
             BC = []
+            C_pr = []
             for t in np.arange(N_trials):
-                p_pr = p.copy()
-                p_pr[strengths == A_pr[t]] = corr
-                B_pr.append(np.random.choice(strengths, 1, p = p_pr))
+                p_A = p.copy()
+                p_A[strengths == A_pr[t]] = corr
+                AC.append(np.random.choice(strengths, 1, p = p_A))
                 
-                p_C = p.copy()
-                p_C[strengths == AC[t]] = corr
-                BC.append(np.random.choice(strengths, 1, p = p_C))
-            B_pr = np.array(B_pr).squeeze()
-            BC = np.array(BC).squeeze()
+                p_B = p.copy()
+                p_B[strengths == B_pr[t]] = corr
+                BC.append(np.random.choice(strengths, 1, p = p_B))
+                
+                if A_pr[t] + B_pr[t] < 1.0: C_pr.append(strengths[-1])
+                if A_pr[t] + B_pr[t] == 1.0: C_pr.append(strengths[1])
+                if A_pr[t] + B_pr[t] > 1.0: C_pr.append(strengths[0])
+                
+                
+            AC = np.array(AC).squeeze()
+            BC = np.array(BC).squeeze()        
+            C_pr = np.array(C_pr).squeeze()        
             
-        elif condition == 'neg_corr':
+                        
+        elif condition == 'weak_link':
+            '''
+            Not complete
+            '''            
             p = np.ones(3)*(corr)/2.0
             A_pr = np.random.choice(strengths, N_trials, p = p0)
-            AC = np.random.choice(strengths, N_trials, p = p0)
-            B_pr = []
+            B_pr = np.random.choice(strengths, N_trials, p = p0)
+            AC = []
             BC = []
+            C_pr = []
             for t in np.arange(N_trials):
-                p_pr = p.copy()
-                p_pr[strengths == A_pr[t]] = 1.0 - corr
-                B_pr.append(np.random.choice(strengths, 1, p = p_pr))
+                p_A = p.copy()
+                p_A[strengths == A_pr[t]] = 1.0 - corr
+                AC.append(np.random.choice(strengths, 1, p = p_A))
                 
-                p_C = p.copy()
-                p_C[strengths == AC[t]] = 1.0 - corr
-                BC.append(np.random.choice(strengths, 1, p = p_C))
-            B_pr = np.array(B_pr).squeeze()
-            BC = np.array(BC).squeeze()
+                p_B = p.copy()
+                p_B[strengths == B_pr[t]] = 1.0 - corr
+                BC.append(np.random.choice(strengths, 1, p = p_B))
+                
+                if A_pr[t] + B_pr[t] > 1.0: C_pr.append(strengths[-1])
+                if A_pr[t] + B_pr[t] == 1.0: C_pr.append(strengths[1])
+                if A_pr[t] + B_pr[t] < 1.0: C_pr.append(strengths[0])
+                
+                
+            AC = np.array(AC).squeeze()
+            BC = np.array(BC).squeeze()        
+            C_pr = np.array(C_pr).squeeze()      
+            
+        else:
+            raise ValueError('Choose a valid condition')
     
         
         return np.vstack((A_pr, AC, B_pr, BC, C_pr)).T
     
-    def get_rationalmodel(self):
+    def find_probs(state, condition):
+        '''
+        Currently tailored to pos/neg corr
+        '''
+        i_A_pr, i_AC, i_B_pr, i_BC, i_C_pr = state
+        _, p0, p_r, p_l, p_m = self._params 
+        P_A_pr = p0[i_A_pr]
+        P_AC = p0[i_AC]
         
+        
+        if condition == 'pos_corr_AB':
+            if i_A_pr < 1: P_B_pr_A_pr = p_l[i_B_pr]
+            if i_A_pr > 1: P_B_pr_A_pr = p_r[i_B_pr]
+            if i_A_pr == 1: P_B_pr_A_pr = p_m[i_B_pr]
+            
+            if i_AC < 1: P_BC_AC = p_l[i_BC]
+            if i_AC > 1: P_BC_AC = p_r[i_BC]
+            if i_AC == 1: P_BC_AC = p_m[i_BC]
+            
+        P_C_pr = 0.2
+        
+        prob = P_A_pr * P_AC * P_A_pr_B_pr * P_BC_AC * P_C_pr
+        
+        return prob
+
+    
+    def get_rationalmodel(self):
         return models.CommEffRational()
     
 

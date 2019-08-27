@@ -4,6 +4,7 @@ import torch.autograd as autograd
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from itertools import product
 
 import generative_causal
 import utils
@@ -18,7 +19,7 @@ import json
 if len(sys.argv) > 1:
   total_part = int(sys.argv[1])
 else:
-  total_part = 10
+  total_part = 24
 
 hrms = []
 P_ams = []
@@ -30,12 +31,12 @@ for part_number in np.arange(total_part):
   
   # Modify in the future to read in / sysarg
   config = {'N_part' : part_number,
-            'optimization_params': {'train_epoch': 3,
+            'optimization_params': {'train_epoch': 210,
                                    'test_epoch': 0,
                                    'L2': 0.0,
                                    'train_lr': 0.02,
                                    'test_lr' : 0.0},
-            'network_params': {'NHID': 3,
+            'network_params': {'NHID': 4,
                                'NONLIN' : 'rbf'},
             'train_blocks' : 200}
   
@@ -72,9 +73,9 @@ for part_number in np.arange(total_part):
   
   rational_model = expt.get_rationalmodel() 
   
-  N_train_params =  expt.assign_params(train_blocks, condition = 'neg_corr', corr = 0.9)
-  P_train_params =  expt.assign_params(train_blocks, condition = 'pos_corr', corr = 0.9)
-  test_params =  expt.assign_params(test_blocks, condition = 'control', corr = None)
+  N_train_params =  expt.assign_params(train_blocks, condition = 'neg_corr_AB', corr = 0.9)
+  P_train_params =  expt.assign_params(train_blocks, condition = 'pos_corr_AB', corr = 0.9)
+  test_params =  expt.assign_params(test_blocks, condition = 'control', corr = 0.9)
   
   queries = np.random.binomial(1, 0.5, size = (N_blocks, 3))
   
@@ -167,11 +168,29 @@ N_ams = np.reshape(np.array(N_ams), (-1))
 all_queries = np.reshape(np.array(all_queries), (-1))
 hrms = np.reshape(np.array(hrms), (-1))
 
+# find true prob distributions over states
+n_dist = []
+p_dist = []
+index = []
+for state0 in product([0,1,2], repeat=4):
+  state = state0 + (0,)
+  p_dist.append(expt.find_probs(state, 'pos_corr_AB'))
+  n_dist.append(expt.find_probs(state, 'neg_corr_AB'))
+  index.append(np.sum(np.array([1, 3, 9, 27])*np.asarray(state0), axis = 1))
+
+n_dist = np.array(n_dist)
+p_dist = np.array(p_dist)
+index = np.array(index)
+  
+
 plot_data = {'P_ams': P_ams,
              'N_ams': N_ams,
              'hrms': hrms,
-             'q': all_queries}
+             'q': all_queries,
+             'n_dist': n_dist,
+             'p_dist': n_dist,
+             }
 
 utils.save_data(plot_data, name = storage_id + 'plot_data')
-        
-        
+
+      
