@@ -6,12 +6,16 @@ library(plyr)
 
 setwd("~/GitHub/causal_markov/Modeling/data")
 
-fn = 'N_part23__expt_nameCommon_effect__NHID4__NONLINrbf__L20.0__test_epoch0__test_lr0.0__train_epoch210__train_lr0.02__train_blocks200__plot_data'
+fn = 'N_part17__expt_nameCommon_effect__NHID4__NONLINrbf__L20.0__test_epoch0__test_lr0.0__train_epoch210__train_lr0.02__train_blocks200__plot_data'
+
 CE_data <- fromJSON(txt=fn)
 
 binary = seq(0, 7)
 in_paper = c(0, 3, 2, 6, 1, 5, 4, 7)
-df = as.data.frame(CE_data)
+df = data.frame(P_ams = CE_data$P_ams,
+                N_ams = CE_data$N_ams,
+                hrms = CE_data$hrms,
+                q = CE_data$q)
 df$q_remap <- mapvalues(CE_data$q, from = binary,
                     to = in_paper)
 
@@ -42,6 +46,31 @@ p_N <- ggplot(df, aes(y = norm_N_ams, x = factor(q_remap))) +
   theme(axis.text.x = element_blank())
 
 p0 = grid.arrange(p_P, p_N, ncol = 1)
-ggsave(file = "diff_preds.png", p0)
+ggsave(file = paste("diff_preds", fn ,".png", sep = ''), p0)
 p0
 
+sym_bins = c(0, 1, 6, 7)
+
+classify <- function(a){
+  if (a %in% sym_bins){
+    return ('Sym')
+  } else{
+    return ('Asym')
+  }
+}
+
+df0 = data.frame(diffPs = c(df$norm_N_ams - df$norm_hrms, df$norm_P_ams- df$norm_hrms),
+                 condition = rep(c('Neg', 'Pos'), each = length(df$q)),
+                 symt = c(sapply(df$q_remap,classify), sapply(df$q_remap,classify))
+)
+df_sum <- ddply(df0, .(condition, symt), summarize, mean = mean(diffPs), sd = sd(diffPs))
+
+p <- ggplot(df_sum, aes(x=condition, y=mean, fill=symt)) + 
+  geom_bar(stat="identity", position=position_dodge()) 
+  + ylim(c(-0.05, 0.05))
+  # geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
+  #               position=position_dodge(.9))
+
+p + scale_fill_brewer(palette="Paired") + theme_minimal()
+
+ggsave(file = paste("diff_preds_summary", fn ,".png", sep = ''), p)

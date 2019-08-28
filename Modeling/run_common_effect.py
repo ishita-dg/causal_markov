@@ -19,7 +19,7 @@ import json
 if len(sys.argv) > 1:
   total_part = int(sys.argv[1])
 else:
-  total_part = 24
+  total_part = 18
 
 hrms = []
 P_ams = []
@@ -48,7 +48,7 @@ for part_number in np.arange(total_part):
   # Parameters for generating the training data
   
   train_blocks = config['train_blocks']
-  test_blocks = 200
+  test_blocks = 500
   N_blocks = train_blocks + test_blocks
   
   # Optimization parameters
