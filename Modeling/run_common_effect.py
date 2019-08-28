@@ -36,7 +36,7 @@ for part_number in np.arange(total_part):
                                    'L2': 0.0,
                                    'train_lr': 0.02,
                                    'test_lr' : 0.0},
-            'network_params': {'NHID': 4,
+            'network_params': {'NHID': 3,
                                'NONLIN' : 'rbf'},
             'train_blocks' : 200}
   
@@ -192,9 +192,9 @@ plot_data = {'P_ams': P_ams,
              'N_ams': N_ams,
              'hrms': hrms,
              'q': all_queries,
-             'n_dist': n_dist,
-             'p_dist': n_dist,
-             'test_dist': test_dist
+             #'n_dist': n_dist,
+             #'p_dist': n_dist,
+             #'test_dist': test_dist
              }
 
 utils.save_data(plot_data, name = storage_id + 'plot_data')

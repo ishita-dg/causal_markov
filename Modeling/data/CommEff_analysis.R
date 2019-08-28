@@ -6,7 +6,7 @@ library(plyr)
 
 setwd("~/GitHub/causal_markov/Modeling/data")
 
-fn = 'N_part17__expt_nameCommon_effect__NHID4__NONLINrbf__L20.0__test_epoch0__test_lr0.0__train_epoch210__train_lr0.02__train_blocks200__plot_data'
+fn = 'N_part17__expt_nameCommon_effect__NHID3__NONLINrbf__L20.0__test_epoch0__test_lr0.0__train_epoch210__train_lr0.02__train_blocks200__plot_data'
 
 CE_data <- fromJSON(txt=fn)
 
