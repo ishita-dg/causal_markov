@@ -19,7 +19,7 @@ import json
 if len(sys.argv) > 1:
   total_part = int(sys.argv[1])
 else:
-  total_part = 18
+  total_part = 42
 
 hrms = []
 P_ams = []
@@ -31,14 +31,14 @@ for part_number in np.arange(total_part):
   
   # Modify in the future to read in / sysarg
   config = {'N_part' : part_number,
-            'optimization_params': {'train_epoch': 210,
+            'optimization_params': {'train_epoch': 500,
                                    'test_epoch': 0,
                                    'L2': 0.0,
                                    'train_lr': 0.02,
                                    'test_lr' : 0.0},
-            'network_params': {'NHID': 3,
-                               'NONLIN' : 'rbf'},
-            'train_blocks' : 200}
+            'network_params': {'NHID': 2,
+                               'NONLIN' : 'tanh'},
+            'train_blocks' : 150}
   
   
   expt = generative_causal.CommEff()
@@ -48,7 +48,7 @@ for part_number in np.arange(total_part):
   # Parameters for generating the training data
   
   train_blocks = config['train_blocks']
-  test_blocks = 500
+  test_blocks = 200
   N_blocks = train_blocks + test_blocks
   
   # Optimization parameters

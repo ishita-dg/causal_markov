@@ -110,21 +110,48 @@
       pages: [
         'Welcome to the experiment. Click next to begin.',
         'In this experiment, we want to test your intuitions for cause and effect. <br>'+
-        'You will be presented with various causal structures. <br>These causal structures will vary in specific ways as explained in the next pages.',
-        'The strength of the causal links can vary. The strength is indicated by the type of arrow'+
-        'The three types of arrows are : <br> <img src="draw_instructions/Slide1.png" width="100" height="100", align = "center"></img> Weak causal links. For every 100 times the cause occurs, the effect will occur 20 times.'+
-        '<br> <img src="draw_instructions/Slide2.png" width="100" height="100", align = "center"></img> Moderate causal links. For every 100 times the cause occurs, the effect will occur 50 times.' +
-        '<br> <img src="draw_instructions/Slide3.png" width="100" height="100", align = "center"></img> Strong causal links. For every 100 times the cause occurs, the effect will occur 80 times. <br>' +
-        'The strengths of arrows can be mixed in the same causal structure, for example:'+
-        '<br> <img src="draw_instructions/Slide4.png" width="100" height="100", align = "center"></img> Indicates a strong causal link between A and C and a weak one between B and C. <br>',
-        'The probability of the causes being present can also vary. This is represented with scales next to the causes like <img src="draw_instructions/Slide5.png" width="100" height="100", align = "center"></img><br>'+
-        'The scale goes from 0% to 100%. <br> In the example here, A is 10% likely to occur, B is 50% likely to occur.',
-        'An example causal structure you might see in this experiment is <br> <img src="draw_instructions/Slide6.png" width="100" height="100", align = "center"></img> <br>'+
-        'Here, A is very likely, B is very unlikely, as shown by the scales. <br> B strongly causes C, and A moderately causes C as given by types of arrows.',
-        'Finally, there is some additional noise, and for every 10 times neither A nor B occurs, C will occur 10 times anyway. <br> This remains the same across all causal structures.',
-        'After you are given a specific causal structure like <img src="draw_instructions/Slide6.png" width="100" height="100", align = "center"></img>, you will see another image that looks like <br> <img src="draw_options/Slide5.png" width="60" height="60", align = "center"></img>  or <img src="draw_options/Slide2.png" width="60" height="60", align = "center"></img> etc<br>'+
-        'This indicates the state of the world. A node being black indicates it is on, being white indicates it is off.<br>'+
-        'Your task is to determine on a slider how likely that state of the world is given the causal structure. <br> You will have to enter a judgement to move on to the next question. <br> Please try to be as accurate in your judgement as possible.',        
+        'You will be presented with various <b> causal structures </b>. <br>These causal structures will vary in specific ways as explained in the next pages.',
+        
+        'The <b>strength of the causal links</b> can vary. <br>The strength is indicated by the type of arrow',
+        
+        'The three types of causal links are : <br> <img src="draw_instructions/Slide01.png" width="150" height="150", align = "center"></img> <b>Weak</b> causal links. <br> For every <b>100</b> times the cause occurs, the effect will occur <b>20</b> times.'+
+        '<br> <img src="draw_instructions/Slide02.png" width="150" height="150", align = "center"></img> <b>Moderate</b> causal links. <br>For every <b>100</b> times the cause occurs, the effect will occur <b>50</b> times.' +
+        '<br> <img src="draw_instructions/Slide03.png" width="150" height="150", align = "center"></img> <b>Strong</b> causal links.<br> For every <b>100</b> times the cause occurs, the effect will occur <b>80</b> times. <br>',
+        
+        'The strengths of arrows can be <b>mixed</b> in the same causal structure, for example:'+
+        '<br> <img src="draw_instructions/Slide04.png" width="180" height="180", align = "center"></img> <br> Indicates a strong causal link between A and C and a weak one between B and C. <br>',
+        
+        'The <b>probability of the causes</b> being present can also vary. <br>This is indicated by the type of arrows pointing to the cause', 
+        
+        'The three types of arrows have similar meanings here : <br> <img src="draw_instructions/Slide05.png" width="150" height="150", align = "center"></img> <b>Weak</b> probability of occurrence. <br> For every <b>100</b> worlds, the cause is present <b>20</b> times.'+
+        '<br> <img src="draw_instructions/Slide06.png" width="150" height="150", align = "center"></img> <b>Moderate</b> probability of occurrence. <br> For every <b>100</b> worlds, the cause is present <b>50</b> times.' +
+        '<br> <img src="draw_instructions/Slide07.png" width="150" height="150", align = "center"></img> <b>Strong</b> probability of occurrence. <br> For every <b>100</b> worlds the cause is present <b>80</b> times. <br>',
+        
+        'The probabilities of the two different causes can be <b>mixed</b> in the same causal structure, for example:'+
+        '<br> <img src="draw_instructions/Slide08.png" width="180" height="180", align = "center"></img> <br> Indicates that A has a moderate probability of occurrence while B has a strong probability of occurrence. <br>',
+        
+        
+        'An example causal structure you might see in this experiment is <br> <img src="draw_instructions/Slide09.png" width="180" height="180", align = "center"></img> <br>'+
+        
+        'Here, A is very likely to occur, B is very unlikely to occur, as shown by the arrows pointing to them. <br> B strongly causes C, and A moderately causes C as given by the arrows pointing to C.',
+        
+        'Finally, there is some <b> additional noise</b>, and C can sometimes occur even when neither A nor B are present. <br> Specifically, for every <b> 100 </b>times neither A nor B occurs, C will occur <b>20</b> times anyway. <br> This remains the same across all causal structures, as shown by the weak arrow pointing to C: <br> <img src="draw_instructions/Slide10.png" width="180" height="180", align = "center"></img> <br>',
+        
+        'Given a causal structure of this sort, you will have to make judgments about which of the nodes (A, B, C) are on or off. <br> This is described in the next section.',
+        
+        'After you are given a specific causal structure, you will see one of the following eight images <br> <br>'+
+        '<img src="draw_options/Slide1.png" width="120" height="120", align = "center"></img> or '+
+        '<img src="draw_options/Slide2.png" width="120" height="120", align = "center"></img> or '+
+        '<img src="draw_options/Slide3.png" width="120" height="120", align = "center"></img> or '+
+        '<img src="draw_options/Slide4.png" width="120" height="120", align = "center"></img>  or <br> <br>'+
+        '<img src="draw_options/Slide5.png" width="120" height="120", align = "center"></img> or '+
+        '<img src="draw_options/Slide6.png" width="120" height="120", align = "center"></img> or '+
+        '<img src="draw_options/Slide7.png" width="120" height="120", align = "center"></img> or '+
+        '<img src="draw_options/Slide8.png" width="120" height="120", align = "center"></img> <br> <br>'+
+        'These indicate the state of the world. <br> A node being black indicates it is on, being white indicates it is off.<br>'+
+        'Your task is to determine on how likely that state of the world is given the causal structure. <br>',
+        
+        'You will have to enter a judgement to move on to the next question. <br> Please try to be as accurate in your judgement as possible.',        
         'Click Next to start the experiment. <br>You will not be able to return to the instructions once you begin'
     ],
     show_clickable_nav: true

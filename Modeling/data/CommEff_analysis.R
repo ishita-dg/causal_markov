@@ -6,7 +6,7 @@ library(plyr)
 
 setwd("~/GitHub/causal_markov/Modeling/data")
 
-fn = 'N_part17__expt_nameCommon_effect__NHID3__NONLINrbf__L20.0__test_epoch0__test_lr0.0__train_epoch210__train_lr0.02__train_blocks200__plot_data'
+fn = 'N_part41__expt_nameCommon_effect__NHID2__NONLINtanh__L20.0__test_epoch0__test_lr0.0__train_epoch500__train_lr0.02__train_blocks150__plot_data'
 
 CE_data <- fromJSON(txt=fn)
 
@@ -59,18 +59,18 @@ classify <- function(a){
   }
 }
 
-df0 = data.frame(diffPs = c(df$norm_N_ams - df$norm_hrms, df$norm_P_ams- df$norm_hrms),
+df0 = data.frame(diffPs = c((df$norm_N_ams - df$norm_hrms),
+                            (df$norm_P_ams- df$norm_hrms)),
                  condition = rep(c('Neg', 'Pos'), each = length(df$q)),
                  symt = c(sapply(df$q_remap,classify), sapply(df$q_remap,classify))
 )
-df_sum <- ddply(df0, .(condition, symt), summarize, mean = mean(diffPs), sd = sd(diffPs))
+df_sum <- ddply(df0, .(condition, symt), summarize, mean = mean(diffPs)/0.125, sd = sd(diffPs))
 
 p <- ggplot(df_sum, aes(x=condition, y=mean, fill=symt)) + 
-  geom_bar(stat="identity", position=position_dodge()) 
-  + ylim(c(-0.05, 0.05))
+  geom_bar(stat="identity", position=position_dodge()) + ylim(c(-0.5, 0.5))
   # geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
   #               position=position_dodge(.9))
 
-p + scale_fill_brewer(palette="Paired") + theme_minimal()
+p
 
 ggsave(file = paste("diff_preds_summary", fn ,".png", sep = ''), p)

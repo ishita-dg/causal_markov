@@ -153,18 +153,12 @@ class CommEffRational():
         return 1.0 - P_no_C
     
     def log_joint(self, A_pr, AC, B_pr, BC, C_pr, A_state, B_state, C_state):
-        #print("***********")
-        #print(A_state, B_state, C_state)
         P_A = A_pr*A_state + (1.0 - A_pr)*(1.0 - A_state)
-        #print(P_A)
         P_B = B_pr*B_state + (1.0 - B_pr)*(1.0 - B_state)
-        #print(P_B)
         C_post = self.noisy_or(A_state, AC, B_state, BC, C_pr)
-        #print(C_post)
         P_C_AB = C_post*C_state + (1.0 - C_post)*(1.0 - C_state)
         logP = np.log(P_A) + np.log(P_B) + np.log(P_C_AB)
         lognotP = np.log(1.0 - np.exp(logP))
-        #print(np.exp(logP))
         return np.array([logP, lognotP])
         
     def pred_post(self, A_pr, AC, B_pr, BC, C_pr, A_state, B_state, C_state):
