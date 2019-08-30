@@ -16,10 +16,10 @@
 
 
     /* create timeline */
-    N_gs = 5
+    N_gs = 1
     N_qs = 2
     train_trials = N_gs * N_qs
-    test_trials = 5
+    test_trials = 2
     N_trials = test_trials + train_trials
     
     var condition = jsPsych.randomization.sampleWithReplacement(['poscorr', 'negcorr'], 1);
@@ -140,7 +140,7 @@
         '<br> <img src="draw_instructions/Slide08.png" width="180" height="180", align = "center"></img> <br> Indicates that <b> X is moderately likely </b>  while <b> Z is moderately likely. </b> <br>',
         
         'Finally, there is some <b> additional noise</b>. <br>'+
-        'The effect Y can sometimes occur (with a <b>20%</b> probability) even when neither of the causes (X, Z) occurs. <br> <b>This remains the same across all causal structures<b>, and is shown by the weak arrow pointing to C: <br> <img src="draw_instructions/Slide09.png" width="180" height="180", align = "center"></img> <br>',
+        'The effect Y can sometimes occur (with a <b>20%</b> probability) even when neither of the causes (X, Z) occurs. <br> <b>This remains the same across all causal structures</b>, and is shown by the weak arrow pointing to Z: <br> <img src="draw_instructions/Slide09.png" width="180" height="180", align = "center"></img> <br>',
         
         'An example causal structure you might see in this experiment is <br> <img src="draw_instructions/Slide10.png" width="180" height="180", align = "center"></img> <br> <br>'+
         
@@ -205,38 +205,42 @@
       questions: [
         {prompt: "If a cause ocurred, the effect will always occur", name: 'prob_c', options: ['True', 'False'], required:true}, 
         {prompt: "How many types of causal links are there (that vary in strength)", name: 'types', options: ['2', '4', '3', '1'], required:true},
-        /*{prompt: "If a cause does not occur, the effect cannot occur", name: 'prob_e', options: ['True', 'False'], required:true}, 
-        {prompt: "A black background in a state means that variable did occur.", name: 'types', options: ['True', 'False'], required:true},
-        {prompt: "What is your task in this experiment?", name: 'task', options: ['To judge how probable a specific causal structure is', 'To judge how probable a specific state is in general', 'To judge how probable a state is given a specific causal structure'], required:true},*/
+        {prompt: "If a cause does not occur, the effect cannot occur", name: 'prob_e', options: ['True', 'False'], required:true}, 
+        {prompt: "A black background in a state means that variable did occur.", name: 'bg', options: ['True', 'False'], required:true},
+        {prompt: "What is your task in this experiment?", name: 'task', options: ['To judge how probable a specific causal structure is', 'To judge how probable a specific state is in general', 'To judge how probable a state is given a specific causal structure'], required:true},
       ],
     };
+    
+    
+    function right_answers2(q1, q2, q3, q4, q5){
+    right = (q1 && q2 && q3 && q4 && q5);
+    return right;
+    }
+    
+    
+    function right_answers(data){
+    q1 = data['prob_c'] == 'False';
+    q2 = data['types'] == '3';
+    q3 = data['prob_e'] == 'False';
+    q4 = data['bg'] == 'True';
+    q5 = data['task'] == 'To judge how probable a state is given a specific causal structure';
+    right = (q1 && q2 && q3 && q4 && q5);
+    return right;
+    }
     
     timeline.push(comprehension);
     
      var success = {
       type: "html-keyboard-response",
-      stimulus: "You have answered the comrehension questions correctly! <br>"+
+      stimulus: "You have answered the comprehension questions correctly! <br>"+
               "<p>Press any key to begin the experiment.</p>",
     };
     
-        var if_node = {
-            timeline: [success],
-            conditional_function: function(){
-                // get the data from the previous trial,
-                // and check which key was pressed
-                var data = jsPsych.data.get().last(1).values()[0];
-                console.log(data)
-
-                if(data.key_press == jsPsych.pluginAPI.convertKeyCharacterToKeyCode('s')){
-                    return false;
-                } else {
-                    return true;
-                }
-            }
-        }
-
-        
-    timeline.push(if_node)
+     var failure = {
+      type: "html-keyboard-response",
+      stimulus: "You have not answered the comprehension questions correctly. <br>"+
+              "<p>Press any key to go to the instructions again.</p>",
+    };
     
     
     var short_instructions = {
@@ -271,7 +275,7 @@
         '<br> <img src="draw_instructions/Slide08.png" width="180" height="180", align = "center"></img> <br> Indicates that <b> X is moderately likely </b>  while <b> Z is moderately likely. </b> <br><hr> <hr>'+
         
         'Finally, there is some <b> additional noise</b>. <br>'+
-        'The effect Y can sometimes occur (with a <b>20%</b> probability) even when neither of the causes (X, Z) ocurred. <br> <b>This remains the same across all causal structures<b>, and is shown by the weak arrow pointing to C: <br> <img src="draw_instructions/Slide09.png" width="180" height="180", align = "center"></img> <br><hr> <hr>'+
+        'The effect Y can sometimes occur (with a <b>20%</b> probability) even when neither of the causes (X, Z) ocurred. <br> <b>This remains the same across all causal structures</b>, and is shown by the weak arrow pointing to Z: <br> <img src="draw_instructions/Slide09.png" width="180" height="180", align = "center"></img> <br><hr> <hr>'+
         
         'An example causal structure you might see in this experiment is <br> <img src="draw_instructions/Slide10.png" width="180" height="180", align = "center"></img> <br> <br>'+
         
@@ -302,7 +306,7 @@
 
         'Once you enter the experiment, you will first see only the causal structure for 2 seconds<br> Please use this time to think about what the probabilities of different states might be under that causal structure. <br> <br> A state will then appear, and you will have to enter a judgement for how probable that state is, on a slider. <br>  The slider goes from 0 to 100. 0 on this scale means Very unlikely, 100 means Very likely. <br> Please try to be as accurate in your judgement as possible.<hr> <hr>'+    
         
-        'You will have to answer a few comprehension questions on the next page before starting the experiment. <br> If you fail to answer these questions correctly, you will be redirected to a page that contains a condensed version of these instructions <br> You will then be able to answer the comprehension questions again.'
+        '<b>You will have to answer a few comprehension questions on the next page before starting the experiment. <br> If you fail to answer these questions correctly, the enxperiment will end.</b>'
     ],
     show_clickable_nav: true
     };
@@ -310,7 +314,10 @@
 
 
 
-    /* test trials 
+    /* test trials  */
+    
+    var all_test_trials = []
+    all_test_trials.push(success)
     
     for (var trial = 0; trial < N_trials; trial++){
     
@@ -322,25 +329,69 @@
           trial_duration: 2000,
           }
           
-        timeline.push(view_trial)
+        all_test_trials.push(view_trial);
 
         var response_trial = {
           type: "two-image-slider-response",
           stimulus_height: 300,
           resp_stimulus_height: 120,
-          max: 62,
-          labels: ['0%', '62%'],
-          start: 31,
+          max: 100,
+          labels: ['Very Unlikely', 'Very Likely'],
+          start: 50,
           button_label: 'Submit',
           require_movement: true,   
           stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
           resp_stimulus: 'draw_options/'+queries[trial]+'.png',
+          data: {"condition": condition},
           }
     
-        timeline.push(response_trial);
+        all_test_trials.push(response_trial);
       
-    }*/
+    }
+    
+    
+    
+    var second_if_node = {
+            timeline: all_test_trials,
+            conditional_function: function(){
+                var data = jsPsych.data.get().last(1).values()[0]['responses'];
 
+                if(!right_answers(JSON.parse(data))){
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+        }
+
+
+
+        var first_if_node = {
+            timeline: all_test_trials,
+            conditional_function: function(){
+                var data = jsPsych.data.get().last(1).values()[0]['responses'];
+                if(!right_answers(JSON.parse(data))){
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+        }
+        
+    timeline.push(first_if_node)
+    timeline.push(failure)
+    timeline.push(short_instructions)
+    timeline.push(comprehension)
+    timeline.push(second_if_node)
+
+    
+     var eoe = {
+      type: "html-keyboard-response",
+      stimulus: "You have reached the end of the experiement! <br>"+
+              "<p>Press any key to finish.</p>",
+    };
+
+timeline.push(eoe)
     
 
     /* start the experiment */
