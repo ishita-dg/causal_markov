@@ -2,12 +2,15 @@
 <html>
     <head>
         <title>My experiment</title>
-        <script src="../../jspsych-6.1.0/jspsych.js"></script>
-         <script src="../../jspsych-6.1.0/plugins/jspsych-survey-multi-choice.js"></script>
-         <script src="../../jspsych-6.1.0/plugins/jspsych-html-keyboard-response.js"></script>         <script src="../../jspsych-6.1.0/plugins/jspsych-instructions.js"></script>
-         <script src="custom_plugins/jspsych-two-image-slider-response.js"></script>
-         <script src="../../jspsych-6.1.0/plugins/jspsych-image-keyboard-response.js"></script>
-        <link href="../../jspsych-6.1.0/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+        <script src="jspsych-6.1.0_used/jspsych.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+         <script src="jspsych-6.1.0_used/plugins/jspsych-survey-multi-choice.js"></script>
+         <script src="jspsych-6.1.0_used/plugins/jspsych-html-keyboard-response.js"></script>         
+         <script src="jspsych-6.1.0_used/plugins/jspsych-instructions.js"></script>
+         <script src="jspsych-6.1.0_used/custom_plugins/jspsych-two-image-slider-response.js"></script>
+	<script src="jspsych-6.1.0_used/plugins/jspsych-external-html.js"></script>
+         <script src="jspsych-6.1.0_used/plugins/jspsych-image-keyboard-response.js"></script>
+        <link href="jspsych-6.1.0_used/css/jspsych.css" rel="stylesheet" type="text/css"></link>
     </head>
     <body></body>
     
@@ -17,9 +20,9 @@
 
     /* create timeline */
     N_gs = 1
-    N_qs = 2
+    N_qs = 1
     train_trials = N_gs * N_qs
-    test_trials = 2
+    test_trials = 1
     N_trials = test_trials + train_trials
     
     var condition = jsPsych.randomization.sampleWithReplacement(['poscorr', 'negcorr'], 1);
@@ -94,6 +97,29 @@
     timeline.push(welcome);*/
 
     /* define instructions trial */
+    
+    // consent
+	var check_consent = function(elem) {
+		if ($('#consent_checkbox').is(':checked')) {
+			return true;
+		}
+		else {
+			alert("If you wish to participate, you must check the box.");
+			return false;
+		}
+		return false;
+	};
+	
+	var consent_block = {
+		type:'external-html',
+		url: "consent-causal.html",
+		cont_btn: "start",
+		check_fn: check_consent
+	};
+
+    /*timeline.push(consent_block)*/
+	
+	
     var intro = {
       type: "html-keyboard-response",
       stimulus: "<p> This study is part of a research project conducted by " +
@@ -189,7 +215,7 @@
 
         'Once you enter the experiment, you will first see only the causal structure for 2 seconds<br> Please use this time to think about what the probabilities of different states might be under that causal structure. <br> <br> A state will then appear, and you will have to enter a judgement for how probable that state is, on a slider. <br>  The slider goes from 0 to 100. 0 on this scale means Very unlikely, 100 means Very likely. <br> Please try to be as accurate in your judgement as possible.',    
         
-        'You will have to answer a few comprehension questions on the next page before starting the experiment. <br> If you do no answer these questions correctly, you will be redirected to a page that contains a condensed version of these instructions <br> You will then be able to answer the comprehension questions again.<br> If you do not answer these questions correctly the second time, the experiment will end.'
+        'On the next page you will see a condensed version of these instructions and a few comprehension questions to answer. <br> You will not be able to continue to the experiment if you do not answer these question correctly.<br>'
     ],
     show_clickable_nav: true
     };
@@ -200,14 +226,14 @@
         
     var comprehension = {
       type: 'survey-multi-choice',
-      preamble: 'Please answer the following comprehension questions', 
+      preamble: '<b><u>Please answer the following comprehension questions</u></b>', 
       button_label: 'Submit',
       questions: [
-        {prompt: "If a cause ocurred, the effect will always occur", name: 'prob_c', options: ['True', 'False'], required:true}, 
-        {prompt: "How many types of causal links are there (that vary in strength)", name: 'types', options: ['2', '4', '3', '1'], required:true},
-        {prompt: "If a cause does not occur, the effect cannot occur", name: 'prob_e', options: ['True', 'False'], required:true}, 
-        {prompt: "A black background in a state means that variable did occur.", name: 'bg', options: ['True', 'False'], required:true},
-        {prompt: "What is your task in this experiment?", name: 'task', options: ['To judge how probable a specific causal structure is', 'To judge how probable a specific state is in general', 'To judge how probable a state is given a specific causal structure'], required:true},
+        {prompt: "If a cause ocurred, the effect will always occur", name: 'prob_c', options: ['True', 'False'], required:true, horizontal: true}, 
+        {prompt: "How many types of causal links are there (that vary in strength)", name: 'types', options: ['2', '4', '3', '1'], required:true, horizontal: true},
+        {prompt: "If a cause does not occur, the effect cannot occur", name: 'prob_e', options: ['True', 'False'], required:true, horizontal: true}, 
+        {prompt: "A black background in a state means that variable did occur.", name: 'bg', options: ['True', 'False'], required:true, horizontal: true},
+        {prompt: "What is your task in this experiment?", name: 'task', options: ['To judge how probable a specific causal structure is', 'To judge how probable a specific state is in general', 'To judge how probable a specific state is given a specific causal structure'], required:true},
       ],
     };
     
@@ -223,7 +249,7 @@
     q2 = data['types'] == '3';
     q3 = data['prob_e'] == 'False';
     q4 = data['bg'] == 'True';
-    q5 = data['task'] == 'To judge how probable a state is given a specific causal structure';
+    q5 = data['task'] == 'To judge how probable a specific state is given a specific causal structure';
     right = (q1 && q2 && q3 && q4 && q5);
     return right;
     }
@@ -342,7 +368,7 @@
           require_movement: true,   
           stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
           resp_stimulus: 'draw_options/'+queries[trial]+'.png',
-          data: {"condition": condition},
+          data: {"condition": condition, 'stimulus': graphs[trial]},
           }
     
         all_test_trials.push(response_trial);
@@ -378,25 +404,56 @@
             }
         }
         
-    timeline.push(first_if_node)
-    timeline.push(failure)
-    timeline.push(short_instructions)
-    timeline.push(comprehension)
-    timeline.push(second_if_node)
-
-    
+   
      var eoe = {
       type: "html-keyboard-response",
       stimulus: "You have reached the end of the experiement! <br>"+
               "<p>Press any key to finish.</p>",
     };
 
-timeline.push(eoe)
-    
 
-    /* start the experiment */
-    jsPsych.init({
-      timeline: timeline
-    });
+
+	// debriefing
+	var debrief_block = {
+			type: 'external-html',
+			url: 'debrief.html',
+			cont_btn: "Continue"
+	};
+
+	// function to save data
+	function saveData(filename, filedata){
+		$.ajax({
+			type:'post',
+			cache: false,
+			url: 'save_data.php', // this is the path to the above PHP script
+			data: {filename: filename, filedata: filedata},
+			complete: function() {
+				window.location.href = "confirmation_code_1PEL.html";
+			}
+		});
+	}
+  
+    // generate random subject id
+	var subject_id = jsPsych.randomization.randomID(8);
+	
+	
+	
+    timeline.push(first_if_node)
+    /*timeline.push(failure)
+    timeline.push(short_instructions)
+    timeline.push(comprehension)
+    timeline.push(second_if_node)*/
+    timeline.push(debrief_block)
+    
+    /*timeline.push(eoe)*/
+
+ 
+
+  jsPsych.init({
+    timeline: timeline,
+	  on_finish: function(){
+					saveData(subject_id + '.csv', jsPsych.data.get().csv())
+				}
+  });
   </script>
   </html>
