@@ -345,8 +345,8 @@
     
     
     
-    var proceed = false;
-    for (attempt = 0; attempt < N_attempts; attempt++){
+    var pass_test = false;
+    for (attempt = 0; attempt < N_attempts - 1; attempt++){
 	N_left = N_attempts - attempt
 	
         var comp_if_node = {
@@ -354,7 +354,7 @@
             conditional_function: function(){
                 var data = jsPsych.data.get().last(1).values()[0]['responses'];
                 if(right_answers(JSON.parse(data))){
-			proceed = true
+			pass_test = true
                     return false;
                 } else {
                     return true;
@@ -406,9 +406,9 @@
     };
     
     
-     var eoe = {
+     var eoe_fail = {
       type: "html-keyboard-response",
-      stimulus: "The experiment is over, press any key to exit. <br>",
+      stimulus: "You have used up all "+ N_attempts + " attempts to answer comprehension. <br> The experiment is over, press any key to exit. <br>",
     };
 
 
@@ -423,7 +423,7 @@
 	// function to save data
 	function saveData(filename, filedata){
 	
-		if (proceed){
+		if (pass_test){
 		$.ajax({
 			type:'post',
 			cache: false,
@@ -453,11 +453,11 @@
     };
     
     
-      var proc_if_node = {
-            timeline: [success].concat(all_test_trials, [comment_box]),
+      var fail_if_node = {
+            timeline: [eoe_fail],
             conditional_function: function(){
-	    console.log(proceed)
-                if(!proceed){
+	    console.log(pass_test)
+                if(pass_test){
                     return false;
                 } else {
                     return true;
@@ -465,9 +465,23 @@
             }
         }
      
-     timeline.push(proc_if_node);
+     timeline.push(fail_if_node);
+     
+     
+      var pass_if_node = {
+            timeline: [success].concat(all_test_trials, [comment_box]),
+            conditional_function: function(){
+	    console.log(pass_test)
+                if(!pass_test){
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+        }
+	
+	timeline.push(pass_if_node);
     
-     timeline.push(eoe);
      
      console.log(timeline)
     
