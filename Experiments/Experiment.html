@@ -4,6 +4,7 @@
         <title>My experiment</title>
         <script src="jspsych-6.1.0_used/jspsych.js"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+         <script src="jspsych-6.1.0_used/plugins/jspsych-survey-text.js"></script>
          <script src="jspsych-6.1.0_used/plugins/jspsych-survey-multi-choice.js"></script>
          <script src="jspsych-6.1.0_used/plugins/jspsych-html-keyboard-response.js"></script>         
          <script src="jspsych-6.1.0_used/plugins/jspsych-instructions.js"></script>
@@ -24,6 +25,9 @@
     train_trials = N_gs * N_qs
     test_trials = 1
     N_trials = test_trials + train_trials
+    var N_attempts = 2;
+    var attempt = 0;
+    
     
     var condition = jsPsych.randomization.sampleWithReplacement(['poscorr', 'negcorr'], 1);
     
@@ -215,7 +219,7 @@
 
         'Once you enter the experiment, you will first see only the causal structure for 2 seconds<br> Please use this time to think about what the probabilities of different states might be under that causal structure. <br> <br> A state will then appear, and you will have to enter a judgement for how probable that state is, on a slider. <br>  The slider goes from 0 to 100. 0 on this scale means Very unlikely, 100 means Very likely. <br> Please try to be as accurate in your judgement as possible.',    
         
-        'On the next page you will see a condensed version of these instructions and a few comprehension questions to answer. <br> You will not be able to continue to the experiment if you do not answer these question correctly.<br>'
+        'On the next page you will see a few comprehension questions to answer. <br> You will be able to continue to the experiment if answer these question correctly.<br> If you answer them incorrectly, you will be redirected to a condensed version of theinstructions and another chance to answer the questions. <br> You will not be able to progress to the experiment until you answer the questions correctly. <br> You will get 6 attempts.<br> '
     ],
     show_clickable_nav: true
     };
@@ -237,6 +241,8 @@
       ],
     };
     
+    timeline.push(comprehension);
+    
     
     function right_answers2(q1, q2, q3, q4, q5){
     right = (q1 && q2 && q3 && q4 && q5);
@@ -254,7 +260,6 @@
     return right;
     }
     
-    timeline.push(comprehension);
     
      var success = {
       type: "html-keyboard-response",
@@ -264,8 +269,8 @@
     
      var failure = {
       type: "html-keyboard-response",
-      stimulus: "You have not answered the comprehension questions correctly. <br>"+
-              "<p>Press any key to go to the instructions again.</p>",
+      stimulus: 'You have not answered the comprehension questions correctly. <br>'+
+              'Press any key to go to the instructions again.',
     };
     
     
@@ -332,11 +337,36 @@
 
         'Once you enter the experiment, you will first see only the causal structure for 2 seconds<br> Please use this time to think about what the probabilities of different states might be under that causal structure. <br> <br> A state will then appear, and you will have to enter a judgement for how probable that state is, on a slider. <br>  The slider goes from 0 to 100. 0 on this scale means Very unlikely, 100 means Very likely. <br> Please try to be as accurate in your judgement as possible.<hr> <hr>'+    
         
-        '<b>You will have to answer a few comprehension questions on the next page before starting the experiment. <br> If you fail to answer these questions correctly, the enxperiment will end.</b>'
+        '<b>You will have to answer a few comprehension questions on the next page before starting the experiment. </b>'
     ],
     show_clickable_nav: true
     };
-
+    
+    
+    
+    
+    var proceed = false;
+    for (attempt = 0; attempt < N_attempts; attempt++){
+	N_left = N_attempts - attempt
+	
+        var comp_if_node = {
+            timeline: [failure, short_instructions, comprehension],
+            conditional_function: function(){
+                var data = jsPsych.data.get().last(1).values()[0]['responses'];
+                if(right_answers(JSON.parse(data))){
+			proceed = true
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+        }
+	timeline.push(comp_if_node);
+	
+    };
+    
+    /*timeline.push(all_comprh_trials);*/
+    
 
 
 
@@ -373,42 +403,12 @@
     
         all_test_trials.push(response_trial);
       
-    }
+    };
     
     
-    
-    var second_if_node = {
-            timeline: all_test_trials,
-            conditional_function: function(){
-                var data = jsPsych.data.get().last(1).values()[0]['responses'];
-
-                if(!right_answers(JSON.parse(data))){
-                    return false;
-                } else {
-                    return true;
-                }
-            }
-        }
-
-
-
-        var first_if_node = {
-            timeline: all_test_trials,
-            conditional_function: function(){
-                var data = jsPsych.data.get().last(1).values()[0]['responses'];
-                if(!right_answers(JSON.parse(data))){
-                    return false;
-                } else {
-                    return true;
-                }
-            }
-        }
-        
-   
      var eoe = {
       type: "html-keyboard-response",
-      stimulus: "You have reached the end of the experiement! <br>"+
-              "<p>Press any key to finish.</p>",
+      stimulus: "The experiment is over, press any key to exit. <br>",
     };
 
 
@@ -422,6 +422,8 @@
 
 	// function to save data
 	function saveData(filename, filedata){
+	
+		if (proceed){
 		$.ajax({
 			type:'post',
 			cache: false,
@@ -431,22 +433,45 @@
 				window.location.href = "confirmation_code_1PEL.html";
 			}
 		});
+		} 
+		
 	}
   
     // generate random subject id
 	var subject_id = jsPsych.randomization.randomID(8);
 	
 	
-	
-    timeline.push(first_if_node)
-    /*timeline.push(failure)
-    timeline.push(short_instructions)
-    timeline.push(comprehension)
-    timeline.push(second_if_node)*/
-    timeline.push(debrief_block)
     
-    /*timeline.push(eoe)*/
-
+        
+    var comment_box = {
+      type: 'survey-text',
+  questions: [
+    {prompt: "Were the instructions clear?", name: 'instructions', rows: 2, columns: 40},
+    {prompt: "How difficult did you find the task?", name: 'difficulty', rows: 2, columns: 40},
+    {prompt: "Do you have any other comments regarding this HIT?", name: 'other', rows: 5, columns: 40},
+     ],
+    };
+    
+    
+      var proc_if_node = {
+            timeline: [success].concat(all_test_trials, [comment_box]),
+            conditional_function: function(){
+	    console.log(proceed)
+                if(!proceed){
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+        }
+     
+     timeline.push(proc_if_node);
+    
+     timeline.push(eoe);
+     
+     console.log(timeline)
+    
+    
  
 
   jsPsych.init({
