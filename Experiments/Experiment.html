@@ -7,7 +7,8 @@
          <script src="jspsych-6.1.0_used/plugins/jspsych-survey-text.js"></script>
          <script src="jspsych-6.1.0_used/plugins/jspsych-survey-multi-choice.js"></script>
          <script src="jspsych-6.1.0_used/plugins/jspsych-html-keyboard-response.js"></script>         
-         <script src="jspsych-6.1.0_used/plugins/jspsych-instructions.js"></script>
+         <script src="jspsych-6.1.0_used/plugins/jspsych-html-button-response.js"></script>         
+	 <script src="jspsych-6.1.0_used/plugins/jspsych-instructions.js"></script>
          <script src="jspsych-6.1.0_used/custom_plugins/jspsych-two-image-slider-response.js"></script>
 	<script src="jspsych-6.1.0_used/plugins/jspsych-external-html.js"></script>
          <script src="jspsych-6.1.0_used/plugins/jspsych-image-keyboard-response.js"></script>
@@ -25,7 +26,7 @@
     train_trials = N_gs * N_qs
     test_trials = 1
     N_trials = test_trials + train_trials
-    var N_attempts = 2;
+    var N_attempts = 3;
     var attempt = 0;
     
     
@@ -92,17 +93,19 @@
     
     var timeline = [];
     
-
-    /* define welcome message trial 
-    var welcome = {
-      type: "html-keyboard-response",
-      stimulus: "Welcome to the experiment. Press any key to begin."
+    var intro = {
+      type: "html-button-response",
+      choices: ["Continue"],
+      stimulus: "<p> This study is part of a research project conducted by " +
+                "Samuel Gershman, Harvard University.</p>"+
+                "<p> We want to examine people's intuitions about causes and effects.</p>" +
+              "<p>Press continue to begin.</p>",
     };
-    timeline.push(welcome);*/
-
-    /* define instructions trial */
+    timeline.push(intro);
+    
     
     // consent
+
 	var check_consent = function(elem) {
 		if ($('#consent_checkbox').is(':checked')) {
 			return true;
@@ -121,41 +124,31 @@
 		check_fn: check_consent
 	};
 
-    /*timeline.push(consent_block)*/
+    timeline.push(consent_block)
 	
-	
-    var intro = {
-      type: "html-keyboard-response",
-      stimulus: "<p> This study is part of a research project conducted by " +
-                "Ishita Dasgupta, Harvard University.</p>"+
-                "<p> We want to examine people's intuitions about causes and effects.</p>" +
-                "<p> Please read the instructions carefully and try to perform as well as you can.</p>" +
-              "<p> If you have any questions, please write an email to  idasgupta@physics.harvard.edu </p><br>"+
-              "<p>Press any key to begin.</p>",
-    };
-    timeline.push(intro);
-    
     var instructions = {
       type: "instructions",
       pages: [
         'Welcome to the experiment. Click next to continue to the instructions.',
         
         'In this experiment, we want to test your intuitions about cause and effect. <br>'+
-        'X causes Y is represented as: <img src="draw_instructions/Slide02.png" width="150" height="150", align = "center"></img>',
+        'X causes Y is represented with a link from X to Y as follows: <br> <img src="draw_instructions/Slide02.png" width="150" height="150", align = "center"></img>',
         
-        'There can be more than one cause for the same effect. For example:<br>'+
+        'There can be more than one cause for the same effect. This is indicated by adding more links, for example:<br>'+
         '<img src="draw_instructions/Slide12.png" width="150" height="150", align = "center"></img><br>'+
-        'Here both X and Z independently can cause Y <br> If both causes occur, then Y is more likely to occur than if only one or none of the causes occurs.',
+        'Here both X and Z independently can cause Y. <br> If both causes occur, then Y is more likely to occur than if only one or none of the causes occurs.',
+	
+	'These links between X, Y, and Z are called the <b> causal structure </b>.  <br>',
         
-        'The presence of a cause X does not guarantee that the effect Y will occur. <br> It only increases the probability that Y will occur.',
+        'The presence of a cause (X or Z) does not guarantee that the effect Y will occur. <br> It only increases the probability that Y will occur.',
         
-        'How much this probability changes is determined by the <b>strength of the causal links</b>. <br>The strength is indicated by the type of arrow',
+        'How much this probability increases is determined by the <b>strength of the link between the cause and the effect</b>. <br>The strength is indicated by the type of arrow.',
         
-        'The three types of causal links are : <br> <img src="draw_instructions/Slide01.png" width="150" height="150", align = "center"></img> <b>Weak</b> causal link. <br> Everytime the cause occurs, the effect has a <b>20%</b> probability of ocurring.'+
-        '<hr> <img src="draw_instructions/Slide02.png" width="150" height="150", align = "center"></img> <b>Moderate</b> causal link. <br>Everytime the cause occurs, the effect has a <b>50%</b> probability of ocurring.' +
-        '<hr> <img src="draw_instructions/Slide03.png" width="150" height="150", align = "center"></img> <b>Strong</b> causal link.<br> Everytime the cause occurs, the effect has a <b>80%</b> probability of ocurring. <br>',
+        'The three types of links are determined by the strength of the arrow: <br> <img src="draw_instructions/Slide01.png" width="150" height="150", align = "center"></img> <b>Weak</b> link. <br> Everytime the cause occurs, the effect has a <b>20%</b> probability of ocurring.'+
+        '<hr> <img src="draw_instructions/Slide02.png" width="150" height="150", align = "center"></img> <b>Moderate</b> link. <br>Everytime the cause occurs, the effect has a <b>50%</b> probability of ocurring.' +
+        '<hr> <img src="draw_instructions/Slide03.png" width="150" height="150", align = "center"></img> <b>Strong</b> link.<br> Everytime the cause occurs, the effect has a <b>80%</b> probability of ocurring. <br>',
         
-        'The strength of causal links can be <b>mixed</b> in the same causal structure, for example:'+
+        'The strength of links can be <b>mixed</b> in the same causal structure, for example:'+
         '<br> <img src="draw_instructions/Slide04.png" width="180" height="180", align = "center"></img> <br> Indicates <b> X strongly causes Y </b> and <b> Z weakly causes Y </b>. <br>',
          
          'The causes (X and Z) also do not always occur.',
@@ -167,7 +160,7 @@
         '<img src="draw_instructions/Slide07.png" width="150" height="150", align = "center"></img> <b>Strong</b> probability of occurrence. <br> The cause has a <b>80%</b> probability of occurring. <br>',
         
         'The probabilities of the two different causes can be <b>mixed</b> in the same causal structure, for example:'+
-        '<br> <img src="draw_instructions/Slide08.png" width="180" height="180", align = "center"></img> <br> Indicates that <b> X is moderately likely </b>  while <b> Z is moderately likely. </b> <br>',
+        '<br> <img src="draw_instructions/Slide08.png" width="180" height="180", align = "center"></img> <br> Indicates that <b> X is moderately likely </b>  while <b> Z is strongly likely. </b> <br>',
         
         'Finally, there is some <b> additional noise</b>. <br>'+
         'The effect Y can sometimes occur (with a <b>20%</b> probability) even when neither of the causes (X, Z) occurs. <br> <b>This remains the same across all causal structures</b>, and is shown by the weak arrow pointing to Z: <br> <img src="draw_instructions/Slide09.png" width="180" height="180", align = "center"></img> <br>',
@@ -178,7 +171,7 @@
         
         'Given a causal structure of this sort, you will have to make judgments about the probability that X, Y, and Z occur. <br> This is described in the next section.',
         
-        'After you are given a specific causal structure, you will see one of the following eight possible <b>states</b> <br> <br>'+
+        'After you are given a specific causal structure, you will see one of the following eight possible <b>states</b>: <br> <br>'+
         '<img src="draw_options/Slide1.png" width="120" height="120", align = "center"></img> or '+
         '<img src="draw_options/Slide2.png" width="120" height="120", align = "center"></img> or '+
         '<img src="draw_options/Slide3.png" width="120" height="120", align = "center"></img> or '+
@@ -187,7 +180,7 @@
         '<img src="draw_options/Slide6.png" width="120" height="120", align = "center"></img> or '+
         '<img src="draw_options/Slide7.png" width="120" height="120", align = "center"></img> or '+
         '<img src="draw_options/Slide8.png" width="120" height="120", align = "center"></img> <br> <br>'+
-        'Black indicates that it ocurred, white indicates it did not occur.<br>'+
+        '<b>Black indicates that it ocurred, white indicates it did not occur.</b><br>'+
         'Your task is to guess the probability of the specific state, given the underlying causal structure. <br>',
         
         'We first go through a few examples to build intuitions for the domain.',
@@ -219,22 +212,21 @@
 
         'Once you enter the experiment, you will first see only the causal structure for 2 seconds<br> Please use this time to think about what the probabilities of different states might be under that causal structure. <br> <br> A state will then appear, and you will have to enter a judgement for how probable that state is, on a slider. <br>  The slider goes from 0 to 100. 0 on this scale means Very unlikely, 100 means Very likely. <br> Please try to be as accurate in your judgement as possible.',    
         
-        'On the next page you will see a few comprehension questions to answer. <br> You will be able to continue to the experiment if answer these question correctly.<br> If you answer them incorrectly, you will be redirected to a condensed version of theinstructions and another chance to answer the questions. <br> You will not be able to progress to the experiment until you answer the questions correctly. <br> You will get 6 attempts.<br> '
+        'On the next page you will see a few comprehension questions. <br> You will not be able to progress to the experiment until you answer the questions correctly. <br> If you answer incorrectly you will be redirected to a summary of the instructions. <br> You will get 3 attempts to answer the comprehension questions correctly.<br> '
     ],
     show_clickable_nav: true
     };
     
-    /*timeline.push(instructions);*/
+    timeline.push(instructions);
     
     
-        
     var comprehension = {
       type: 'survey-multi-choice',
       preamble: '<b><u>Please answer the following comprehension questions</u></b>', 
       button_label: 'Submit',
       questions: [
         {prompt: "If a cause ocurred, the effect will always occur", name: 'prob_c', options: ['True', 'False'], required:true, horizontal: true}, 
-        {prompt: "How many types of causal links are there (that vary in strength)", name: 'types', options: ['2', '4', '3', '1'], required:true, horizontal: true},
+        {prompt: "How many types of links are there (that vary in strength)", name: 'types', options: ['2', '4', '3', '1'], required:true, horizontal: true},
         {prompt: "If a cause does not occur, the effect cannot occur", name: 'prob_e', options: ['True', 'False'], required:true, horizontal: true}, 
         {prompt: "A black background in a state means that variable did occur.", name: 'bg', options: ['True', 'False'], required:true, horizontal: true},
         {prompt: "What is your task in this experiment?", name: 'task', options: ['To judge how probable a specific causal structure is', 'To judge how probable a specific state is in general', 'To judge how probable a specific state is given a specific causal structure'], required:true},
@@ -262,59 +254,66 @@
     
     
      var success = {
-      type: "html-keyboard-response",
+      type: "html-button-response",
+      choices: ["Continue"],
       stimulus: "You have answered the comprehension questions correctly! <br>"+
-              "<p>Press any key to begin the experiment.</p>",
+              "<p>Press continue to begin the experiment.</p>",
     };
     
      var failure = {
-      type: "html-keyboard-response",
+      type: "html-button-response",
+      choices: ["Continue"],
       stimulus: 'You have not answered the comprehension questions correctly. <br>'+
-              'Press any key to go to the instructions again.',
+              'Press continue to go to the instructions again.',
     };
     
     
     var short_instructions = {
       type: "instructions",
       pages: [
-        'X causes Y is represented as: <img src="draw_instructions/Slide02.png" width="150" height="150", align = "center"></img><hr> <hr>'+
         
-        'There can be more than one cause for the same effect. For example:<br>'+
+        
+        'In this experiment, we want to test your intuitions about cause and effect. <br>'+
+        'X causes Y is represented with a link from X to Y as follows: <br> <img src="draw_instructions/Slide02.png" width="150" height="150", align = "center"></img><hr> <hr> '+
+        
+        'There can be more than one cause for the same effect. This is indicated by adding more links, for example:<br>'+
         '<img src="draw_instructions/Slide12.png" width="150" height="150", align = "center"></img><br>'+
-        'Here both X and Z independently can cause Y <br> If both causes occur, then Y is more likely to occur than if only one or none of the causes occurs.<hr> <hr>'+
+        'Here both X and Z independently can cause Y. <br> If both causes occur, then Y is more likely to occur than if only one or none of the causes occurs.<hr> <hr> '+
+	
+	'These links between X, Y, and Z are called the <b> causal structure </b>.  <br><hr> <hr> '+
         
-        'The presence of a cause X does not guarantee that the effect Y will occur. <br> It only increases the probability that Y will occur.<hr> <hr>'+
+        'The presence of a cause (X or Z) does not guarantee that the effect Y will occur. <br> It only increases the probability that Y will occur.<hr> <hr> '+
         
-        'How much this probability changes is determined by the <b>strength of the causal links</b>. <br>The strength is indicated by the type of arrow<hr> <hr>'+
+        'How much this probability increases is determined by the <b>strength of the link between the cause and the effect</b>. <br>The strength is indicated by the type of arrow.<hr> <hr> '+
         
-        'The three types of causal links are : <br> <img src="draw_instructions/Slide01.png" width="150" height="150", align = "center"></img> <b>Weak</b> causal link. <br> Everytime the cause occurs, the effect has a <b>20%</b> probability of ocurring.'+
-        '<hr> <img src="draw_instructions/Slide02.png" width="150" height="150", align = "center"></img> <b>Moderate</b> causal link. <br>Everytime the cause occurs, the effect has a <b>50%</b> probability of ocurring.' +
-        '<hr> <img src="draw_instructions/Slide03.png" width="150" height="150", align = "center"></img> <b>Strong</b> causal link.<br> Everytime the cause occurs, the effect has a <b>80%</b> probability of ocurring. <br><hr> <hr>'+
+        'The three types of links are determined by the strength of the arrow: <br> <img src="draw_instructions/Slide01.png" width="150" height="150", align = "center"></img> <b>Weak</b> link. <br> Everytime the cause occurs, the effect has a <b>20%</b> probability of ocurring.'+
+        '<hr> <img src="draw_instructions/Slide02.png" width="150" height="150", align = "center"></img> <b>Moderate</b> link. <br>Everytime the cause occurs, the effect has a <b>50%</b> probability of ocurring.' +
+        '<hr> <img src="draw_instructions/Slide03.png" width="150" height="150", align = "center"></img> <b>Strong</b> link.<br> Everytime the cause occurs, the effect has a <b>80%</b> probability of ocurring. <br><hr> <hr> '+
         
-        'The strength of causal links can be <b>mixed</b> in the same causal structure, for example:'+
-        '<br> <img src="draw_instructions/Slide04.png" width="180" height="180", align = "center"></img> <br> Indicates <b> X strongly causes Y </b> and <b> Z weakly causes Y </b>. <br><hr> <hr>'+
+        'The strength of links can be <b>mixed</b> in the same causal structure, for example:'+
+        '<br> <img src="draw_instructions/Slide04.png" width="180" height="180", align = "center"></img> <br> Indicates <b> X strongly causes Y </b> and <b> Z weakly causes Y </b>. <br><hr> <hr> '+
          
-         'The causes (X and Z) also do not always occur.<hr> <hr>'+
+         'The causes (X and Z) also do not always occur.<hr> <hr> '+
          
-        'The <b>probability of the causes</b> occurring is indicated by <br> the type of arrows pointing to the cause<hr> <hr>'+ 
+        'The <b>probability of the causes</b> occurring is indicated by <br> the type of arrows pointing to the cause<hr> <hr> '+ 
         
         'The three types of arrows have similar meanings here : <br> <img src="draw_instructions/Slide05.png" width="150" height="150", align = "center"></img> <b>Weak</b> probability of occurrence. <br> The cause has a <b>20%</b> probability of occurring.<hr>'+
         '<img src="draw_instructions/Slide06.png" width="150" height="150", align = "center"></img> <b>Moderate</b> probability of occurrence. <br> The cause has a <b>50%</b> probability of occurring.<hr>' +
-        '<img src="draw_instructions/Slide07.png" width="150" height="150", align = "center"></img> <b>Strong</b> probability of occurrence. <br> The cause has a <b>80%</b> probability of occurring. <br><hr> <hr>'+
+        '<img src="draw_instructions/Slide07.png" width="150" height="150", align = "center"></img> <b>Strong</b> probability of occurrence. <br> The cause has a <b>80%</b> probability of occurring. <br><hr> <hr> '+
         
         'The probabilities of the two different causes can be <b>mixed</b> in the same causal structure, for example:'+
-        '<br> <img src="draw_instructions/Slide08.png" width="180" height="180", align = "center"></img> <br> Indicates that <b> X is moderately likely </b>  while <b> Z is moderately likely. </b> <br><hr> <hr>'+
+        '<br> <img src="draw_instructions/Slide08.png" width="180" height="180", align = "center"></img> <br> Indicates that <b> X is moderately likely </b>  while <b> Z is strongly likely. </b> <br><hr> <hr> '+
         
         'Finally, there is some <b> additional noise</b>. <br>'+
-        'The effect Y can sometimes occur (with a <b>20%</b> probability) even when neither of the causes (X, Z) ocurred. <br> <b>This remains the same across all causal structures</b>, and is shown by the weak arrow pointing to Z: <br> <img src="draw_instructions/Slide09.png" width="180" height="180", align = "center"></img> <br><hr> <hr>'+
+        'The effect Y can sometimes occur (with a <b>20%</b> probability) even when neither of the causes (X, Z) occurs. <br> <b>This remains the same across all causal structures</b>, and is shown by the weak arrow pointing to Z: <br> <img src="draw_instructions/Slide09.png" width="180" height="180", align = "center"></img> <br><hr> <hr> '+
         
         'An example causal structure you might see in this experiment is <br> <img src="draw_instructions/Slide10.png" width="180" height="180", align = "center"></img> <br> <br>'+
         
-        /*'A is moderately likely to occur <br> B is strongly likely to occur<br> <br>B strongly causes C <br> A moderately causes C<br> <br><hr> <hr>'+*/
+        /*'A is moderately likely to occur <br> B is strongly likely to occur<br> <br>B strongly causes C <br> A moderately causes C<br> <br><hr> <hr> '+*/
         
-        'Given a causal structure of this sort, you will have to make judgments about the probability that X, Y, and Z occur. <br> This is described in the next section.<hr> <hr>'+
+        'Given a causal structure of this sort, you will have to make judgments about the probability that X, Y, and Z occur. <br> This is described in the next section.<hr> <hr> '+
         
-        'After you are given a specific causal structure, you will see one of the following eight possible <b>states</b> <br> <br>'+
+        'After you are given a specific causal structure, you will see one of the following eight possible <b>states</b>: <br> <br>'+
         '<img src="draw_options/Slide1.png" width="120" height="120", align = "center"></img> or '+
         '<img src="draw_options/Slide2.png" width="120" height="120", align = "center"></img> or '+
         '<img src="draw_options/Slide3.png" width="120" height="120", align = "center"></img> or '+
@@ -323,20 +322,19 @@
         '<img src="draw_options/Slide6.png" width="120" height="120", align = "center"></img> or '+
         '<img src="draw_options/Slide7.png" width="120" height="120", align = "center"></img> or '+
         '<img src="draw_options/Slide8.png" width="120" height="120", align = "center"></img> <br> <br>'+
-        'Black indicates that it ocurred, white indicates it did not occur.<br>'+
-        'Your task is to guess the probability of the specific state, given the underlying causal structure. <br><hr> <hr>'+
+        '<b>Black indicates that it ocurred, white indicates it did not occur.</b><br>'+
+        'Your task is to guess the probability of the specific state, given the underlying causal structure. <br><hr> <hr> '+
         
-        'We first go through a few examples to build intuitions for the domain.<hr> <hr>'+
+        'We first go through a few examples to build intuitions for the domain.<hr> <hr> '+
         
         'For Causal structure : <img src="draw_stimuli/Slide81.png" width="180" height="180", align = "center"></img> <br>'+
-        '<img src="draw_options/Slide8.png" width="120" height="120", align = "center"></img> is much more probable than <img src="draw_options/Slide1.png" width="120" height="120", align = "center"></img><hr> <hr>'+
+        '<img src="draw_options/Slide8.png" width="120" height="120", align = "center"></img> is much more probable than <img src="draw_options/Slide1.png" width="120" height="120", align = "center"></img><hr> <hr> '+
         
         
         'For Causal structure : <img src="draw_stimuli/Slide36.png" width="180" height="180", align = "center"></img> <br>'+
-        '<img src="draw_options/Slide4.png" width="120" height="120", align = "center"></img> is more probable than <img src="draw_options/Slide1.png" width="120" height="120", align = "center"></img>, <br> but they are both less probable than <img src="draw_options/Slide6.png" width="120" height="120", align = "center"></img><hr> <hr>'+
+        '<img src="draw_options/Slide4.png" width="120" height="120", align = "center"></img> is more probable than <img src="draw_options/Slide1.png" width="120" height="120", align = "center"></img>, <br> but they are both less probable than <img src="draw_options/Slide6.png" width="120" height="120", align = "center"></img><hr> <hr> '+
 
-        'Once you enter the experiment, you will first see only the causal structure for 2 seconds<br> Please use this time to think about what the probabilities of different states might be under that causal structure. <br> <br> A state will then appear, and you will have to enter a judgement for how probable that state is, on a slider. <br>  The slider goes from 0 to 100. 0 on this scale means Very unlikely, 100 means Very likely. <br> Please try to be as accurate in your judgement as possible.<hr> <hr>'+    
-        
+        'Once you enter the experiment, you will first see only the causal structure for 2 seconds<br> Please use this time to think about what the probabilities of different states might be under that causal structure. <br> <br> A state will then appear, and you will have to enter a judgement for how probable that state is, on a slider. <br>  The slider goes from 0 to 100. 0 on this scale means Very unlikely, 100 means Very likely. <br> Please try to be as accurate in your judgement as possible.<hr> <hr> '+    
         '<b>You will have to answer a few comprehension questions on the next page before starting the experiment. </b>'
     ],
     show_clickable_nav: true
@@ -364,9 +362,6 @@
 	timeline.push(comp_if_node);
 	
     };
-    
-    /*timeline.push(all_comprh_trials);*/
-    
 
 
 
@@ -406,9 +401,18 @@
     };
     
     
+     var eoe_pass = {
+      type: "html-button-response",
+      choices: ["Continue"],
+      stimulus: "This is the end of the questions about causal structure. <br>Press continue to go to the debriefing and feedback section. <br>",
+    };
+    
+    all_test_trials.push(eoe_pass)
+    
      var eoe_fail = {
-      type: "html-keyboard-response",
-      stimulus: "You have used up all "+ N_attempts + " attempts to answer comprehension. <br> The experiment is over, press any key to exit. <br>",
+      type: "html-button-response",
+      choices: ["Exit"],
+      stimulus: "You have used up all "+ N_attempts + " attempts to answer comprehension. <br> The experiment is over, press the button to exit. <br>",
     };
 
 
@@ -445,10 +449,11 @@
         
     var comment_box = {
       type: 'survey-text',
+      preamble: "<b>Please provide your feedback about the task below</b>",
   questions: [
     {prompt: "Were the instructions clear?", name: 'instructions', rows: 2, columns: 40},
     {prompt: "How difficult did you find the task?", name: 'difficulty', rows: 2, columns: 40},
-    {prompt: "Do you have any other comments regarding this HIT?", name: 'other', rows: 5, columns: 40},
+    {prompt: "Do you have any other comments regarding this task?", name: 'other', rows: 5, columns: 40},
      ],
     };
     
@@ -469,7 +474,7 @@
      
      
       var pass_if_node = {
-            timeline: [success].concat(all_test_trials, [comment_box]),
+            timeline: [success].concat(all_test_trials, [debrief_block, comment_box]),
             conditional_function: function(){
 	    console.log(pass_test)
                 if(!pass_test){
