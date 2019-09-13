@@ -2,7 +2,7 @@ library(jsonlite)
 library(ggplot2)
 require(gridExtra)
 library(plyr)
-
+library(BayesFactor)
 
 setwd("~/GitHub/causal_markov/Experiments/data")
 
@@ -38,7 +38,7 @@ sumRT = ddply(df, .(part_num), summarize, tRT = sum(rt))
 y_parts = sumRT$part_num[sumRT$tRT > quantile(sumRT$tRT)[3]]
 # df = subset(df, part_num %in% y_parts)
 # df = subset(df, rt > quantile(rt)[2])
-# df = subset(df, stim == 40)
+df = subset(df, stim == 40)
 
 binary = seq(0, 7)
 in_paper = c(0, 3, 2, 6, 1, 5, 4, 7)
@@ -77,3 +77,9 @@ p <- ggplot(df_sum, aes(x=symt, y=mean, fill=cond)) +
 p
 
 ggsave(file = paste("diff_preds_summary", fn ,".png", sep = ''), p)
+
+ttestBF(subset(df, cond == 'negcorr')$resp, subset(df, cond == 'poscorr')$resp)
+ttestBF(subset(df, cond == 'negcorr' & symt == 'Sym')$resp, subset(df, cond == 'poscorr' & symt == 'Sym')$resp)
+ttestBF(subset(df, cond == 'negcorr' & symt == 'Asym')$resp, subset(df, cond == 'poscorr' & symt == 'Asym')$resp)
+
+
