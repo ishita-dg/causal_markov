@@ -10,3 +10,4 @@
 *refscripts*
 *.csv*
 *.Rhistory*
+*Experiments/data/*.csv

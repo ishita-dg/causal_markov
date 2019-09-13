@@ -6,7 +6,7 @@ library(plyr)
 
 setwd("~/GitHub/causal_markov/Modeling/data")
 
-fn = 'N_part41__expt_nameCommon_effect__NHID2__NONLINtanh__L20.0__test_epoch0__test_lr0.0__train_epoch500__train_lr0.02__train_blocks150__plot_data'
+fn = 'N_part41__expt_nameCommon_effect__NHID2__NONLINtanh__L20.0__test_epoch0__test_lr0.0__train_epoch200__train_lr0.02__train_blocks50__plot_data'
 
 CE_data <- fromJSON(txt=fn)
 
@@ -46,30 +46,57 @@ p_N <- ggplot(df, aes(y = norm_N_ams, x = factor(q_remap))) +
   theme(axis.text.x = element_blank())
 
 p0 = grid.arrange(p_P, p_N, ncol = 1)
-ggsave(file = paste("diff_preds", fn ,".png", sep = ''), p0)
+# ggsave(file = paste("diff_preds", fn ,".png", sep = ''), p0)
 p0
 
-sym_bins = c(0, 1, 6, 7)
+sym_bins = c(0,7)
+asym_bins = c(4,5)
 
 classify <- function(a){
   if (a %in% sym_bins){
     return ('Sym')
-  } else{
+  } else if (a %in% asym_bins){
     return ('Asym')
   }
+  else {return ('discard')}
 }
+
+N_part = as.integer( (substr(fn, 7, 8))) + 1
+N_test = length(df$q) / N_part
 
 df0 = data.frame(diffPs = c((df$norm_N_ams - df$norm_hrms),
                             (df$norm_P_ams- df$norm_hrms)),
                  condition = rep(c('Neg', 'Pos'), each = length(df$q)),
+                 part_num = rep(c(seq(1, N_test)), each = 2*N_part),
                  symt = c(sapply(df$q_remap,classify), sapply(df$q_remap,classify))
 )
-df_sum <- ddply(df0, .(condition, symt), summarize, mean = mean(diffPs)/0.125, sd = sd(diffPs))
+df_sum0 <- ddply(df0, .(condition, symt, part_num), summarize, mean_pp = mean(diffPs)/0.125)
+df_sum <- ddply(df_sum0, .(condition, symt), summarize, mean = mean(mean_pp), sd =  qnorm(.975)*sd(mean_pp)/sqrt(N_part))
 
 p <- ggplot(df_sum, aes(x=condition, y=mean, fill=symt)) + 
-  geom_bar(stat="identity", position=position_dodge()) + ylim(c(-0.5, 0.5))
-  # geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
-  #               position=position_dodge(.9))
+  geom_bar(stat="identity", position=position_dodge()) + ylim(c(-0.5, 0.5))+
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
+                position=position_dodge(.9))
+
+# p
+
+# ggsave(file = paste("diff_preds_summary", fn ,".png", sep = ''), p)
+
+
+df0 = data.frame(diffPs = c((df$norm_N_ams),
+                            (df$norm_P_ams)),
+                 condition = rep(c('Neg', 'Pos'), each = length(df$q)),
+                 part_num = rep(c(seq(1, N_test)), each = 2*N_part),
+                 symt = c(sapply(df$q_remap,classify), sapply(df$q_remap,classify))
+)
+df0 = subset(df0, symt != 'discard')
+df_sum0 <- ddply(df0, .(condition, symt, part_num), summarize, mean_pp = mean(diffPs))
+df_sum <- ddply(df_sum0, .(condition, symt), summarize, mean = mean(mean_pp), sd =  qnorm(.975)*sd(mean_pp)/sqrt(N_part))
+
+p <- ggplot(df_sum, aes(x=symt, y=mean, fill=condition)) + 
+  geom_bar(stat="identity", position=position_dodge()) + ylim(c(-0.0, 0.2))+
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
+                position=position_dodge(.9))
 
 p
 

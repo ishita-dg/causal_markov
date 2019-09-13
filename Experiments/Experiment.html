@@ -24,10 +24,12 @@
     N_gs = 30
     N_qs = 1
     train_trials = N_gs * N_qs
-    test_trials = 12
+    test_trials = 20
     N_trials = test_trials + train_trials
     var N_attempts = 3;
     var attempt = 0;
+    
+    N_total = train_trials + test_trials
     
     
     var condition = jsPsych.randomization.sampleWithReplacement(['poscorr', 'negcorr'], 1);
@@ -184,7 +186,7 @@
         '<img src="draw_options/Slide7.png" width="120" height="120", align = "center"></img> '+
         '<img src="draw_options/Slide8.png" width="120" height="120", align = "center"></img> <br> <br>'+
         '<b>Black indicates that it ocurred, white indicates it did not occur.</b><br>'+
-        'Your task is to guess the probability of the specific state, given the underlying causal structure. <br>',
+        'Your task is to guess the probability of the specific state, given the underlying causal structure. You will have to answer 50 such questions. <br>',
         
         'We first go through a few examples to build intuitions for the domain.',
         
@@ -326,7 +328,7 @@
         '<img src="draw_options/Slide7.png" width="120" height="120", align = "center"></img> '+
         '<img src="draw_options/Slide8.png" width="120" height="120", align = "center"></img> <br> <br>'+
         '<b>Black indicates that it ocurred, white indicates it did not occur.</b><br>'+
-        'Your task is to guess the probability of the specific state, given the underlying causal structure. <br><hr> <hr> '+
+        'Your task is to guess the probability of the specific state, given the underlying causal structure. You will have to answer 50 such questions. <br><hr> <hr> '+
         
         'We first go through a few examples to build intuitions for the domain.<hr> <hr> '+
         
@@ -396,7 +398,9 @@
           require_movement: true,   
           stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
           resp_stimulus: 'draw_options/'+queries[trial]+'.png',
-          data: {"condition": condition, 'stimulus': graphs[trial]},
+          data: {"condition": condition, 
+		'stimulus': graphs[trial], 
+		'resp_stimulus': queries[trial]},
           }
     
         all_test_trials.push(response_trial);

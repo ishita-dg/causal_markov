@@ -17,28 +17,35 @@ import json
 
 
 if len(sys.argv) > 1:
-  total_part = int(sys.argv[1])
+  i_LR = float(sys.argv[1])
+  i_TE = int(sys.argv[2])
+  i_L2 = float(sys.argv[3])
 else:
-  total_part = 42
+  i_LR = 0.02
+  i_TE = 500
+  i_L2 = 0.0
 
+
+total_part = 48
 hrms = []
 P_ams = []
 N_ams = []
 all_queries = []
+all_stims = []
 
 for part_number in np.arange(total_part):
   print("Participant number, ", part_number)
   
   # Modify in the future to read in / sysarg
   config = {'N_part' : part_number,
-            'optimization_params': {'train_epoch': 500,
+            'optimization_params': {'train_epoch': i_TE,
                                    'test_epoch': 0,
-                                   'L2': 0.0,
-                                   'train_lr': 0.02,
+                                   'L2': i_L2,
+                                   'train_lr': i_LR,
                                    'test_lr' : 0.0},
             'network_params': {'NHID': 2,
                                'NONLIN' : 'tanh'},
-            'train_blocks' : 150}
+            'train_blocks' : 30}
   
   
   expt = generative_causal.CommEff()
@@ -48,7 +55,7 @@ for part_number in np.arange(total_part):
   # Parameters for generating the training data
   
   train_blocks = config['train_blocks']
-  test_blocks = 200
+  test_blocks = 20
   N_blocks = train_blocks + test_blocks
   
   # Optimization parameters
@@ -162,10 +169,14 @@ for part_number in np.arange(total_part):
   N_ams.append(N_test_data['y_am'][:, 0])
   query_index = np.sum(np.array([1, 2, 4])*P_test_data['X'][:, -3:], axis = 1)
   all_queries.append(query_index)
+  stim_index = np.sum(np.array([1, 3, 9, 27])*P_test_data['X'][:, 4], axis = 1)
+  all_stims.append(stim_index)
+  
   
 P_ams = np.reshape(np.array(P_ams), (-1))
 N_ams = np.reshape(np.array(N_ams), (-1))
 all_queries = np.reshape(np.array(all_queries), (-1))
+all_stims = np.reshape(np.array(all_stims), (-1))
 hrms = np.reshape(np.array(hrms), (-1))
 
 # find true prob distributions over states
@@ -192,6 +203,7 @@ plot_data = {'P_ams': P_ams,
              'N_ams': N_ams,
              'hrms': hrms,
              'q': all_queries,
+             'stim': all_stims,
              #'n_dist': n_dist,
              #'p_dist': n_dist,
              #'test_dist': test_dist
