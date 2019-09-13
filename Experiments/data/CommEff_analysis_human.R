@@ -11,23 +11,33 @@ N_test = 20
 
 df = data.frame()
 N_part = 0
+RTs = c()
 for (fn in dir(path = expt_folder)){
   N_part = N_part + 1
   x = read.csv(paste(expt_folder, fn, sep = ''))
+  
+  RT = sum(tail(as.numeric(x$rt[is.finite(x$response)]), N_test))
+  
+  RTs = append(RTs, RT)
   df0 = data.frame(resp = tail(x$response[is.finite(x$response)], N_test)/100.0,
                    stim = tail(x$stimulus[is.finite(x$response)], N_test),
                    query = tail(x$resp_stimulus[is.finite(x$response)], N_test),
                    cond = tail(rep(unique(x$condition)[2], each = sum(is.finite(x$response))), N_test),
-                   part_num = tail(rep( N_part , each = sum(is.finite(x$response))), N_test)
+                   part_num = tail(rep( N_part , each = sum(is.finite(x$response))), N_test),
+                   rt = tail(as.numeric(x$rt[is.finite(x$response)]), N_test)
   )
   df = rbind(df, df0)
 }
+
 
 df$query = lapply(df$query, function(x) as.integer((substr(x, 6, 7))) - 1)
 df$stim = lapply(df$stim, function(x) as.integer((substr(x, 6, 8))) - 1)
 
 df_0 = df
-
+sumRT = ddply(df, .(part_num), summarize, tRT = sum(rt))
+y_parts = sumRT$part_num[sumRT$tRT > quantile(sumRT$tRT)[3]]
+# df = subset(df, part_num %in% y_parts)
+# df = subset(df, rt > quantile(rt)[2])
 # df = subset(df, stim == 40)
 
 binary = seq(0, 7)

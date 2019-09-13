@@ -169,7 +169,7 @@ for part_number in np.arange(total_part):
   N_ams.append(N_test_data['y_am'][:, 0])
   query_index = np.sum(np.array([1, 2, 4])*P_test_data['X'][:, -3:], axis = 1)
   all_queries.append(query_index)
-  stim_index = np.sum(np.array([1, 3, 9, 27])*P_test_data['X'][:, 4], axis = 1)
+  stim_index = np.sum(np.array([1, 3, 9, 27])*np.round(2*P_test_data['X'][:, :4]), axis = 1)
   all_stims.append(stim_index)
   
   
