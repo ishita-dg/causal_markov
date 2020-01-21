@@ -15,7 +15,8 @@ in_paper = c(0, 3, 2, 6, 1, 5, 4, 7)
 df = data.frame(P_ams = CE_data$P_ams,
                 N_ams = CE_data$N_ams,
                 hrms = CE_data$hrms,
-                q = CE_data$q)
+                q = CE_data$q,
+                stim = CE_data$stim)
 df$q_remap <- mapvalues(CE_data$q, from = binary,
                     to = in_paper)
 
@@ -101,3 +102,80 @@ p <- ggplot(df_sum, aes(x=symt, y=mean, fill=condition)) +
 p
 
 ggsave(file = paste("diff_preds_summary", fn ,".png", sep = ''), p)
+
+
+# ********************************
+# Predictions based on conditionals
+# ********************************
+# writing required conditionals in terms of joints
+# Binary order is top cause Y, bottom cause Y, effct X 
+dec2bin <- function(x) tail(as.integer(rev(intToBits(x))), 3)
+decimal <- lapply(df$q_remap, dec2bin)
+
+# Binary order is effect, bottom, top
+decimal <- lapply(df$q, dec2bin)
+df$y <- lapply(decimal, function(x) x[1])
+df$z <- lapply(decimal, function(x) x[2])
+df$y <- lapply(decimal, function(x) x[3])
+
+find_dep_vars <- function(df, var){
+  
+  P <- function(x, z, y) {
+    mean(var[df$x == x & df$z == z & df$y == y])
+  }
+  
+  dep_vars = c()
+  #P_Y1_g_Y0 
+  dep_vars[1] = (
+    (P(1, 0, 0) + P(1, 0, 1))/(P(1, 0, 0) + P(1, 0, 1) + P(0, 0, 0) + P(0, 0, 1)) + 
+      (P(0, 1, 0) + P(0, 1, 1))/(P(0, 1, 0) + P(0, 1, 1) + P(0, 0, 0) + P(0, 0, 1))
+    )/2
+  #P_Y1_g_Y1 
+  dep_vars[2] = (
+    (P(1, 1, 0) + P(1, 1, 1))/(P(1, 1, 0) + P(1, 1, 1) + P(1, 0, 0) + P(1, 0, 1))+
+      (P(1, 1, 0) + P(1, 1, 1))/(P(1, 1, 0) + P(1, 1, 1) + P(0, 1, 0) + P(0, 1, 1))
+    )/2
+  #P_Y1_g_Y0_X1 
+  dep_vars[3] = (
+    P(1, 0, 1)/(P(1, 0, 1) + P(0, 0, 1))+
+      P(0, 1, 1)/(P(0, 1, 1) + P(0, 0, 1))
+  )/2
+  #P_Y1_g_X1 
+  dep_vars[4] = (
+    (P(1, 1, 1) + P(1, 0, 1))/(P(1, 1, 1) + P(1, 0, 1) + P(0, 1, 1) + P(0, 0, 1))+
+      (P(1, 1, 1) + P(0, 1, 1))/(P(1, 1, 0) + P(0, 1, 1) + P(1, 0, 0) + P(0, 0, 1))
+  )/2
+  #P_Y1_g_Y1_X1 
+  dep_vars[5] = (
+    P(1, 1, 1)/(P(1, 1, 1) + P(0, 1, 1))+
+      P(1, 1, 1)/(P(1, 1, 1) + P(1, 0, 1))
+  )/2
+  
+  return(dep_vars)
+}
+
+true = find_dep_vars(subset(df, stim == 40), subset(df, stim == 40)$hrms)
+poscorr = find_dep_vars(subset(df, stim == 40), subset(df, stim == 40)$P_ams)
+negcorr = find_dep_vars(subset(df, stim == 40), subset(df, stim == 40)$N_ams)
+lab = c('P(y1 = 1|y2 = 0)', 'P(y1 = 1|y2 = 1)', 
+           'P(y1 = 1|y2 = 0, x = 1)', 'P(y1 = 1|x = 1)', 'P(y1 = 1|y2 = 1, x = 1)')
+
+all_dep_vars = data.frame(preds = c(true, poscorr, negcorr),
+                          condition = rep(c('True', 'Pos', 'Neg'), each = 5),
+                          labels = factor(rep(lab, times = 3), levels = lab)
+)
+
+p <- ggplot(all_dep_vars, aes(x=labels, y=preds, fill=condition)) + 
+  geom_bar(stat="identity", position=position_dodge()) + ylim(c(-0.1, 1.0))
+p
+# #P_Y1_g_Y0 
+# dep_vars[1] = (sum(subset(df, y1 == 1 & y2 == 0)$P_ams) / sum(subset(df, y2 == 0)$P_ams) + sum(subset(df, y2 == 1 & y1 == 0)$P_ams) / sum(subset(df, y1 == 0)$P_ams))/2
+# #P_Y1_g_Y1 
+# dep_vars[2] = (sum(subset(df, y1 == 1 & y2 == 1)$P_ams) / sum(subset(df, y2 == 1)$P_ams) + sum(subset(df, y2 == 1 & y1 == 1)$P_ams) / sum(subset(df, y1 == 1)$P_ams))/2
+# #P_Y1_g_Y0_X1 
+# dep_vars[3] = (sum(subset(df, y1 == 1 & y2 == 0 & x == 1)$P_ams) / sum(subset(df, y2 == 0 & x == 1)$P_ams) + sum(subset(df, y2 == 1 & y1 == 0 & x == 1)$P_ams) / sum(subset(df, y1 == 0 & x == 1)$P_ams))/2
+# #P_Y1_g_X1 
+# dep_vars[4] = (sum(subset(df, y1 == 1 & x == 1)$P_ams) / sum(subset(df, x == 1)$P_ams) + sum(subset(df, y2 == 1 & x == 1)$P_ams) / sum(subset(df, x == 1)$P_ams))/2
+# #P_Y1_g_Y1_X1 
+# dep_vars[5] = (sum(subset(df, y1 == 1 & y2 == 1 & x == 1)$P_ams) / sum(subset(df, y2 == 1 & x == 1)$P_ams) + sum(subset(df, y2 == 1 & y1 == 1 & x == 1)$P_ams) / sum(subset(df, y1 == 1 & x == 1)$P_ams))/2
+
