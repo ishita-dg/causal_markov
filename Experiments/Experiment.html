@@ -21,10 +21,10 @@
 
 
     /* create timeline */
-    N_gs = 30
+    N_gs = 5
     N_qs = 1
     train_trials = N_gs * N_qs
-    test_trials = 20
+    test_trials = 5
     N_trials = test_trials + train_trials
     var N_attempts = 3;
     var attempt = 0;
@@ -84,13 +84,35 @@
     graphs = train_graphs.concat(test_graphs)
     
         
-    var queries0 = []    
+    var joint_queries = []    
     for (var i = 1; i < 9; i++) {
-          queries0 = queries0.concat('Slide' + i);
+          joint_queries = joint_queries.concat('draw_options_joint/Slide' + i);
         }
 
-    var reps = 1 + N_trials / 8;
-    var queries = jsPsych.randomization.repeat(queries0, reps).slice(start = 0, end = N_trials);
+    var cond_queries = []    
+    for (var i = 1; i < 10; i++) {
+          cond_queries = cond_queries.concat('draw_options_cond_both/Slide0' + i);
+        }
+    for (var i = 10; i < 13; i++) {
+          cond_queries = cond_queries.concat('draw_options_cond_both/Slide' + i);
+        }
+    for (var i = 1; i < 10; i++) {
+          cond_queries = cond_queries.concat('draw_options_cond_one/Slide0' + i);
+        }
+    for (var i = 10; i < 13; i++) {
+          cond_queries = cond_queries.concat('draw_options_cond_one/Slide' + i);
+        }
+
+
+    
+    var reps = 1 + train_trials / 8;
+    var train_queries = jsPsych.randomization.repeat(joint_queries, reps).slice(start = 0, end = train_trials);
+    
+    var reps = 1 + test_trials / 12;
+    var test_queries = jsPsych.randomization.repeat(cond_queries, reps).slice(start = 0, end = test_trials);
+    
+    var queries = train_queries.concat(test_queries);
+
     
     var timeline = [];
     
@@ -174,38 +196,90 @@
         
         /*'A is moderately likely to occur <br> B is strongly likely to occur<br> <br>B strongly causes C <br> A moderately causes C<br> <br>',*/
         
-        'Given a causal structure of this sort, you will have to make judgments about the probability that X, Y, and Z occur. <br> This is described in the next section.',
+        'Given a causal structure of this sort, you will have to make judgments about the probability that X, Y, and Z occur. <br> There are three main kinds of question you might be asked. This is described in the next section.',
+	
+	 'The first kind of question you might be asked is as follows: <br> After you are given a specific causal structure, you might see a <b>causal state</b> like the one below: <br> <br>'+
+        '<img src="draw_options_joint/Slide6.png" width="120" height="120", align = "center"></img>  <br> <br>'+
+        '<b>Black indicates that a variable ocurred, white indicates it did not occur.</b><br>'+
+	'In this example, therefore, X and Y occur, while Z does not. <br>'+
+        'Your task is to guess the probability of this happenning, given the underlying causal structure. <br>',
+	
         
-        'After you are given a specific causal structure, you will see one of the following eight possible <b>states</b>: <br> <br>'+
-        '<img src="draw_options/Slide1.png" width="120" height="120", align = "center"></img> '+
-        '<img src="draw_options/Slide2.png" width="120" height="120", align = "center"></img> '+
-        '<img src="draw_options/Slide3.png" width="120" height="120", align = "center"></img> '+
-        '<img src="draw_options/Slide4.png" width="120" height="120", align = "center"></img>  <br> <br>'+
-        '<img src="draw_options/Slide5.png" width="120" height="120", align = "center"></img> '+
-        '<img src="draw_options/Slide6.png" width="120" height="120", align = "center"></img> '+
-        '<img src="draw_options/Slide7.png" width="120" height="120", align = "center"></img> '+
-        '<img src="draw_options/Slide8.png" width="120" height="120", align = "center"></img> <br> <br>'+
-        '<b>Black indicates that it ocurred, white indicates it did not occur.</b><br>'+
-        'Your task is to guess the probability of the specific state, given the underlying causal structure. You will have to answer 50 such questions. <br>',
+        'The eight possible states are: <br> <br>'+
+        '<img src="draw_options_joint/Slide1.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_joint/Slide2.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_joint/Slide3.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_joint/Slide4.png" width="120" height="120", align = "center"></img>  <br> <br>'+
+        '<img src="draw_options_joint/Slide5.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_joint/Slide6.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_joint/Slide7.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_joint/Slide8.png" width="120" height="120", align = "center"></img> <br> <br>',
+	
+	'The second kind of question you might be asked is as follows: <br> After you are given a specific causal structure, you might see a <b>causal state</b> like the one below: <br> <br>'+
+        '<img src="draw_options_cond_both/Slide07.png" width="120" height="120", align = "center"></img>  <br> <br>'+
+        'Black indicates that a variable ocurred, white indicates it did not occur, <b>while gray indicates we do not know if it occurred.</b><br>'+
+	'In this example, therefore, X did not occur, Y occurred, and we do not know if Z occurred.<br>'+
+	'The question mark indicates the variable whose probability you have to guess.'+
+        'Therefore, your task here is to guess the probability of Z ocurring, given your knowledge of the causal structure, <b> as well as </b> the knowledge that X did not occur and Y did occur. <br>',
+	
+	'The twelve possible states for this kind of question are: <br> <br>'+
+        '<img src="draw_options_cond_both/Slide01.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_both/Slide02.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_both/Slide03.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_both/Slide04.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_both/Slide05.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_both/Slide06.png" width="120" height="120", align = "center"></img>  <br> <br>'+
+        '<img src="draw_options_cond_both/Slide07.png" width="120" height="120", align = "center"></img> '+
+         '<img src="draw_options_cond_both/Slide08.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_both/Slide09.png" width="120" height="120", align = "center"></img> '+
+       '<img src="draw_options_cond_both/Slide10.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_both/Slide11.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_both/Slide12.png" width="120" height="120", align = "center"></img> <br> <br>',
+
+	'The third and final kind of question you might be asked is as follows: <br> After you are given a specific causal structure, you might see a <b>causal state</b> like the one below: <br> <br>'+
+        '<img src="draw_options_cond_one/Slide08.png" width="120" height="120", align = "center"></img>  <br> <br>'+
+        'Black indicates that a variable ocurred, white indicates it did not occur, while gray indicates we do not know if it occurred.<br>'+
+	'In this example, therefore, X did occur, and we do not know if Y and Z occurred.<br>'+
+	'The question mark indicates the variable whose probability you have to guess.'+
+        'Therefore, your task here is to guess the probability of Z ocurring, given your knowledge of the causal structure, <b> as well as </b> the knowledge that X did occur -- without any knowledge of if Y occurred. <br>',
+	
+	'The twelve possible states for this kind of question are: <br> <br>'+
+        '<img src="draw_options_cond_one/Slide01.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_one/Slide02.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_one/Slide03.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_one/Slide04.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_one/Slide05.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_one/Slide06.png" width="120" height="120", align = "center"></img>  <br> <br>'+
+        '<img src="draw_options_cond_one/Slide07.png" width="120" height="120", align = "center"></img> '+
+         '<img src="draw_options_cond_one/Slide08.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_one/Slide09.png" width="120" height="120", align = "center"></img> '+
+       '<img src="draw_options_cond_one/Slide10.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_one/Slide11.png" width="120" height="120", align = "center"></img> '+
+        '<img src="draw_options_cond_one/Slide12.png" width="120" height="120", align = "center"></img> <br> <br>',
+
+	
+	'You will have to answer 50 such questions',
+        
         
         'We first go through a few examples to build intuitions for the domain.',
         
         'For Causal structure : <img src="draw_stimuli/Slide81.png" width="180" height="180", align = "center"></img> <br>'+
-        '<img src="draw_options/Slide8.png" width="120" height="120", align = "center"></img> is much more probable than <img src="draw_options/Slide1.png" width="120" height="120", align = "center"></img>',
+        '<img src="draw_options_joint/Slide8.png" width="120" height="120", align = "center"></img> is much more probable than <img src="draw_options_joint/Slide1.png" width="120" height="120", align = "center"></img>',
         
         
         'For Causal structure : <img src="draw_stimuli/Slide36.png" width="180" height="180", align = "center"></img> <br>'+
-        '<img src="draw_options/Slide4.png" width="120" height="120", align = "center"></img> is more probable than <img src="draw_options/Slide1.png" width="120" height="120", align = "center"></img>, <br> but they are both less probable than <img src="draw_options/Slide6.png" width="120" height="120", align = "center"></img>',
-
+        '<img src="draw_options_joint/Slide4.png" width="120" height="120", align = "center"></img> is more probable than <img src="draw_options_joint/Slide1.png" width="120" height="120", align = "center"></img>, <br> but they are both less probable than <img src="draw_options_joint/Slide6.png" width="120" height="120", align = "center"></img>',
+	
+	
         
         /*'The maximum probability for any pair of causal structure and world state is around 61.95%.<br> This is achieved by the following: <br>'+
         'Causal structure : <img src="draw_stimuli/Slide81.png" width="180" height="180", align = "center"></img> <br>'+
-        'State of the world : <img src="draw_options/Slide8.png" width="120" height="120", align = "center"></img><hr>'+
+        'State of the world : <img src="draw_options_joint/Slide8.png" width="120" height="120", align = "center"></img><hr>'+
         'Both A and B are strongly likely to occur, and they both strongly cause C -- therefore it is very likely that all of the nodes (A, B, C) occur. This makes the proposed state of the world very likely.',
         
         'The minimum probability for any pair of causal structure and world state is around 0.128%.<br> This is achieved by the following: <br>'+
         'Causal structure : <img src="draw_stimuli/Slide61.png" width="180" height="180", align = "center"></img> <br>'+
-        'State of the world : <img src="draw_options/Slide7.png" width="120" height="120", align = "center"></img><hr>'+
+        'State of the world : <img src="draw_options_joint/Slide7.png" width="120" height="120", align = "center"></img><hr>'+
         'Both A and B are only weakly likely to appear, so it is unlikely that A and B are on. Further, they both strongly cause C, so if they occur, it is very unlikely that C will not occur. This makes the proposed state of the world very unlikely.',
         
         'You will be given a response slider to enter your response. <br>'+
@@ -215,7 +289,7 @@
         'If all the states were equally likely, they would each occur with probability of 100 / 8 = 12.5%.<br> '+
         'Therefore the average probability is 12.5% -- this means that most responses shoudl lie below the midpoint of 31%.',*/
 
-        'Once you enter the experiment, you will first see only the causal structure for 2 seconds.<br> Please use this time to think about what the probabilities of different states might be under that causal structure. <br> <br> A state will then appear, and you will have to enter a judgement for how probable that state is, on a slider. <br>  The slider goes from 0 to 100. <br> 0 on this scale means Very unlikely, 100 means Very likely. <br> Please try to be as accurate in your judgement as possible.',    
+        'Once you enter the experiment, you will first see only the causal structure for 2 seconds.<br> Please use this time to think about what the probabilities of different states might be under that causal structure. <br> <br> A question will then appear, and you will have to enter a probability judgment, on a slider. <br>  The slider goes from 0 to 100. <br> 0 on this scale means Very unlikely, 100 means Very likely. <br> Please try to be as accurate in your judgement as possible.',    
         
         'On the next page you will see a few comprehension questions. <br> You will not be able to progress to the experiment until you answer the questions correctly. <br> If you answer incorrectly you will be redirected to a summary of the instructions. <br> You will get 3 attempts to answer the comprehension questions correctly.<br> '
     ],
@@ -316,30 +390,47 @@
         
         /*'A is moderately likely to occur <br> B is strongly likely to occur<br> <br>B strongly causes C <br> A moderately causes C<br> <br><hr> <hr> '+*/
         
-        'Given a causal structure of this sort, you will have to make judgments about the probability that X, Y, and Z occur. <br> This is described in the next section.<hr> <hr> '+
         
-        'After you are given a specific causal structure, you will see one of the following eight possible <b>states</b>: <br> <br>'+
-        '<img src="draw_options/Slide1.png" width="120" height="120", align = "center"></img> '+
-        '<img src="draw_options/Slide2.png" width="120" height="120", align = "center"></img> '+
-        '<img src="draw_options/Slide3.png" width="120" height="120", align = "center"></img> '+
-        '<img src="draw_options/Slide4.png" width="120" height="120", align = "center"></img>  <br> <br>'+
-        '<img src="draw_options/Slide5.png" width="120" height="120", align = "center"></img> '+
-        '<img src="draw_options/Slide6.png" width="120" height="120", align = "center"></img> '+
-        '<img src="draw_options/Slide7.png" width="120" height="120", align = "center"></img> '+
-        '<img src="draw_options/Slide8.png" width="120" height="120", align = "center"></img> <br> <br>'+
-        '<b>Black indicates that it ocurred, white indicates it did not occur.</b><br>'+
-        'Your task is to guess the probability of the specific state, given the underlying causal structure. You will have to answer 50 such questions. <br><hr> <hr> '+
+        'Given a causal structure of this sort, you will have to make judgments about the probability that X, Y, and Z occur. <br> There are three main kinds of question you might be asked. This is described in the next section.<hr><hr>'+
+	
+	 'The first kind of question you might be asked is as follows: <br> After you are given a specific causal structure, you might see a <b>causal state</b> like the one below: <br> <br>'+
+        '<img src="draw_options_joint/Slide6.png" width="120" height="120", align = "center"></img>  <br> <br>'+
+        '<b>Black indicates that a variable ocurred, white indicates it did not occur.</b><br>'+
+	'In this example, therefore, X and Y occur, while Z does not. <br>'+
+        'Your task is to guess the probability of this happenning, given the underlying causal structure. <br><hr><hr>'+
+	
+	'The second kind of question you might be asked is as follows: <br> After you are given a specific causal structure, you might see a <b>causal state</b> like the one below: <br> <br>'+
+        '<img src="draw_options_cond_both/Slide07.png" width="120" height="120", align = "center"></img>  <br> <br>'+
+        'Black indicates that a variable ocurred, white indicates it did not occur, <b>while gray indicates we do not know if it occurred.</b><br>'+
+	'In this example, therefore, X did not occur, Y occurred, and we do not know if Z occurred.<br>'+
+	'The question mark indicates the variable whose probability you have to guess.'+
+        'Therefore, your task here is to guess the probability of Z ocurring, given your knowledge of the causal structure, <b> as well as </b> the knowledge that X did not occur and Y did occur. <br><hr><hr>'+
+
+	'The third and final kind of question you might be asked is as follows: <br> After you are given a specific causal structure, you might see a <b>causal state</b> like the one below: <br> <br>'+
+        '<img src="draw_options_cond_one/Slide08.png" width="120" height="120", align = "center"></img>  <br> <br>'+
+        'Black indicates that a variable ocurred, white indicates it did not occur, while gray indicates we do not know if it occurred.<br>'+
+	'In this example, therefore, X did occur, and we do not know if Y and Z occurred.<br>'+
+	'The question mark indicates the variable whose probability you have to guess.'+
+        'Therefore, your task here is to guess the probability of Z ocurring, given your knowledge of the causal structure, <b> as well as </b> the knowledge that X did occur -- without any knowledge of if Y occurred. <br><hr><hr>'+
+	
+	'You will have to answer 50 such questions<hr><hr>'+
         
-        'We first go through a few examples to build intuitions for the domain.<hr> <hr> '+
         
+        'We first go through a few examples to build intuitions for the domain.<hr><hr>'+
+	
         'For Causal structure : <img src="draw_stimuli/Slide81.png" width="180" height="180", align = "center"></img> <br>'+
-        '<img src="draw_options/Slide8.png" width="120" height="120", align = "center"></img> is much more probable than <img src="draw_options/Slide1.png" width="120" height="120", align = "center"></img><hr> <hr> '+
+        '<img src="draw_options_joint/Slide8.png" width="120" height="120", align = "center"></img> is much more probable than <img src="draw_options_joint/Slide1.png" width="120" height="120", align = "center"></img><hr> <hr> '+
         
         
         'For Causal structure : <img src="draw_stimuli/Slide36.png" width="180" height="180", align = "center"></img> <br>'+
-        '<img src="draw_options/Slide4.png" width="120" height="120", align = "center"></img> is more probable than <img src="draw_options/Slide1.png" width="120" height="120", align = "center"></img>, <br> but they are both less probable than <img src="draw_options/Slide6.png" width="120" height="120", align = "center"></img><hr> <hr> '+
+        '<img src="draw_options_joint/Slide4.png" width="120" height="120", align = "center"></img> is more probable than <img src="draw_options_joint/Slide1.png" width="120" height="120", align = "center"></img>, <br> but they are both less probable than <img src="draw_options_joint/Slide6.png" width="120" height="120", align = "center"></img><hr> <hr> '+ 
+	
+	'Sometimes you will also have to make judgments about the probability that X, Y or Z will occur, <b> given </b> the value of some of other variables. <br>'+
+	'For example, given a causal structure, you might be asked the probability that Y occurs, given that you know Z occurred. <hr> <hr> '+
 
-        'Once you enter the experiment, you will first see only the causal structure for 2 seconds.<br> Please use this time to think about what the probabilities of different states might be under that causal structure. <br> <br> A state will then appear, and you will have to enter a judgement for how probable that state is, on a slider. <br>  The slider goes from 0 to 100. <br> 0 on this scale means Very unlikely, 100 means Very likely. <br> Please try to be as accurate in your judgement as possible.<hr> <hr> '+    
+
+	'Once you enter the experiment, you will first see only the causal structure for 2 seconds.<br> Please use this time to think about what the probabilities of different states might be under that causal structure. <br> <br> A question will then appear, and you will have to enter a probability judgment, on a slider. <br>  The slider goes from 0 to 100. <br> 0 on this scale means Very unlikely, 100 means Very likely. <br> Please try to be as accurate in your judgement as possible. <hr> <hr> ' + 
+	
         '<b>You will have to answer a few comprehension questions on the next page before starting the experiment. </b>'
     ],
     show_clickable_nav: true
@@ -397,7 +488,7 @@
           button_label: 'Submit',
           require_movement: true,   
           stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
-          resp_stimulus: 'draw_options/'+queries[trial]+'.png',
+          resp_stimulus: queries[trial]+'.png',
           data: {"condition": condition, 
 		'stimulus': graphs[trial], 
 		'resp_stimulus': queries[trial]},

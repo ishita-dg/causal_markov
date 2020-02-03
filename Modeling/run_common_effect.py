@@ -26,7 +26,7 @@ else:
   i_L2 = 0.0
 
 
-total_part = 48
+total_part = 72
 hrms = []
 P_ams = []
 N_ams = []
@@ -44,7 +44,7 @@ for part_number in np.arange(total_part):
                                    'train_lr': i_LR,
                                    'test_lr' : 0.0},
             'network_params': {'NHID': 2,
-                               'NONLIN' : 'tanh'},
+                               'NONLIN' : 'rbf'},
             'train_blocks' : 30}
   
   
@@ -55,7 +55,7 @@ for part_number in np.arange(total_part):
   # Parameters for generating the training data
   
   train_blocks = config['train_blocks']
-  test_blocks = 20
+  test_blocks = 100
   N_blocks = train_blocks + test_blocks
   
   # Optimization parameters
