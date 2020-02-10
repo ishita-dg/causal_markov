@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>My experiment</title>
+        <script src="jspsych-6.1.0_used/jspsych.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+         <script src="jspsych-6.1.0_used/plugins/jspsych-survey-text.js"></script>
+         <script src="jspsych-6.1.0_used/plugins/jspsych-survey-multi-choice.js"></script>
+         <script src="jspsych-6.1.0_used/plugins/jspsych-html-keyboard-response.js"></script>         
+         <script src="jspsych-6.1.0_used/plugins/jspsych-html-button-response.js"></script>         
+	 <script src="jspsych-6.1.0_used/plugins/jspsych-instructions.js"></script>
+         <script src="jspsych-6.1.0_used/custom_plugins/jspsych-three-image-slider-response.js"></script>
+	<script src="jspsych-6.1.0_used/plugins/jspsych-external-html.js"></script>
+         <script src="jspsych-6.1.0_used/plugins/jspsych-image-keyboard-response.js"></script>
+        <link href="jspsych-6.1.0_used/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+    </head>
+    <body></body>
+    
+     
+  <script>
+
+
+    /* create timeline */
+    N_gs = 20
+    N_qs = 1
+    train_trials = N_gs * N_qs
+    test_trials = 20
+    N_trials = test_trials + train_trials
+    var N_attempts = 3;
+    var attempt = 0;
+    
+    N_total = train_trials + test_trials
+    
+    
+    var condition = jsPsych.randomization.sampleWithReplacement(['poscorr', 'negcorr'], 1);
+    
+    
+    if (condition == 'poscorr'){
+    train_probs = [ 102.,    3.,    2.,   13.,   10.,    2.,   13.,    3.,   13.,
+          3.,    2.,    0.,    0.,    7.,    0.,    0.,    2.,    3.,
+          2.,    0.,    2.,    0.,    1.,    2.,    0.,    0.,   13.,
+         13.,    0.,    0.,    2.,    1.,    0.,    2.,    0.,    2.,
+         10.,    7.,    1.,    1.,   22.,    1.,    1.,    7.,   10.,
+          2.,    0.,    2.,    0.,    1.,    2.,    0.,    0.,   13.,
+         13.,    0.,    0.,    2.,    1.,    0.,    2.,    0.,    2.,
+          3.,    2.,    0.,    0.,    7.,    0.,    0.,    2.,    3.,
+         13.,    3.,   13.,    2.,   10.,   13.,    2.,    3.,  102.]
+    } else if (condition == 'negcorr'){
+    
+    train_probs = [  13.,    3.,   13.,    2.,   10.,   13.,    2.,    3.,  102.,
+          3.,    2.,    0.,    0.,    7.,    0.,    0.,    2.,    3.,
+         13.,    0.,    0.,    2.,    1.,    0.,    2.,    0.,    2.,
+          2.,    0.,    2.,    0.,    1.,    2.,    0.,    0.,   13.,
+         10.,    7.,    1.,    1.,   22.,    1.,    1.,    7.,   10.,
+         13.,    0.,    0.,    2.,    1.,    0.,    2.,    0.,    2.,
+          2.,    0.,    2.,    0.,    1.,    2.,    0.,    0.,   13.,
+          3.,    2.,    0.,    0.,    7.,    0.,    0.,    2.,    3.,
+        102.,    3.,    2.,   13.,   10.,    2.,   13.,    3.,   13.]
+    }
+    
+    test_probs = [   0.,    0.,    0.,    0.,    3.,    0.,    0.,    0.,    0.,
+          0.,    3.,    0.,    3.,   26.,    3.,    0.,    3.,    0.,
+          0.,    0.,    0.,    0.,    3.,    0.,    0.,    0.,    0.,
+          0.,    3.,    0.,    3.,   26.,    3.,    0.,    3.,    0.,
+          3.,   26.,    3.,   26.,  205.,   26.,    3.,   26.,    3.,
+          0.,    3.,    0.,    3.,   26.,    3.,    0.,    3.,    0.,
+          0.,    0.,    0.,    0.,    3.,    0.,    0.,    0.,    0.,
+          0.,    3.,    0.,    3.,   26.,    3.,    0.,    3.,    0.,
+          0.,    0.,    0.,    0.,    3.,    0.,    0.,    0.,    0.]
+        
+    var graphs0 = []    
+    for (var i = 1; i < 82; i++) {
+    if (i < 10) {
+        graphs0 = graphs0.concat('Slide0' + i);
+        } else{
+        graphs0 = graphs0.concat('Slide' + i);
+        }
+          
+    }   
+    var train_graphs = jsPsych.randomization.sampleWithReplacement(graphs0, 500, train_probs).slice(start = 0, end = train_trials);
+    
+    var test_graphs = jsPsych.randomization.sampleWithReplacement(graphs0, 500, test_probs).slice(start = 0, end = test_trials);
+    
+    graphs = train_graphs.concat(test_graphs)
+    
+        
+    var all_queries = []    
+    for (var i = 1; i < 10; i++) {
+          all_queries = all_queries.concat('draw_querys/Slide0' + i);
+        }
+    for (var i = 10; i < 55; i++) {
+          all_queries = all_queries.concat('draw_querys/Slide' + i);
+        }
+
+
+    
+    var reps = 1 + N_trials / 54;
+    var l_queries = jsPsych.randomization.repeat(all_queries, reps).slice(start = 0, end = N_trials);
+    
+    var r_queries = []
+    var new_index = 0
+    for (var i = 0; i < N_trials; i++) {
+          index = parseInt(l_queries[i].slice(start = 17, end = 20));
+	  if (index % 2){
+		new_index = index + 1;
+	} else {
+		new_index = index - 1;
+	}
+		
+	  if (new_index < 10){
+		  r_queries = r_queries.concat('draw_querys/Slide0' + new_index);
+        } else{
+		  r_queries = r_queries.concat('draw_querys/Slide' + new_index);
+	}
+	  
+        }
+	
+    
+
+    
+    var all_test_trials = []
+    
+    for (var trial = 0; trial < N_trials; trial++){
+    
+        var view_trial = { 
+          type: "image-keyboard-response",
+          stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
+          stimulus_height: 300,
+          choices: jsPsych.NO_KEYS, 
+          trial_duration: 2000,
+          }
+          
+        all_test_trials.push(view_trial);
+
+        var response_trial = {
+          type: "three-image-slider-response",
+          stimulus_height: 300,
+          resp_stimulus_height: 120,
+          max: 100,
+          labels: ['Left 20x likely', 'Right 20x likely'],
+          start: 50,
+          button_label: 'Submit',
+          require_movement: true,   
+          stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
+	  left_resp_stimulus: l_queries[trial]+'.png',
+          right_resp_stimulus: r_queries[trial]+'.png',
+          data: {"condition": condition, 
+		'stimulus': graphs[trial], 
+		'left_resp_stimulus': l_queries[trial]+'.png',
+		'right_resp_stimulus': r_queries[trial]+'.png'},
+          }
+    
+        all_test_trials.push(response_trial);
+      
+    };
+    
+    
+     var eoe_pass = {
+      type: "html-button-response",
+      choices: ["Continue"],
+      stimulus: "This is the end of the questions about causal structure. <br>Press continue to go to the debriefing and feedback section. <br>",
+    };
+    
+    all_test_trials.push(eoe_pass)
+    
+     var eoe_fail = {
+      type: "html-button-response",
+      choices: ["Exit"],
+      stimulus: "You have used up all "+ N_attempts + " attempts to answer comprehension. <br> The experiment is over, press the button to exit. <br>",
+    };
+
+
+
+	// debriefing
+	var debrief_block = {
+			type: 'external-html',
+			url: 'debrief.html',
+			cont_btn: "Continue"
+	};
+
+	// function to save data
+	function saveData(filename, filedata){
+	
+		if (pass_test){
+		$.ajax({
+			type:'post',
+			cache: false,
+			url: 'save_data.php', // this is the path to the above PHP script
+			data: {filename: filename, filedata: filedata},
+			complete: function() {
+				window.location.href = "confirmation_code_1PEL.html";
+			}
+		});
+		} 
+		
+	}
+  
+    // generate random subject id
+	var subject_id = jsPsych.randomization.randomID(8);
+	
+	
+    
+    
+    
+    timeline = all_test_trials;
+
+  jsPsych.init({
+    timeline: timeline,
+	  on_finish: function(){
+					saveData(subject_id + '.csv', jsPsych.data.get().csv())
+				}
+  });
+  </script>
+  </html>
