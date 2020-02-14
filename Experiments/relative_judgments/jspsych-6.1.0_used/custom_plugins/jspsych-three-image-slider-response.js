@@ -235,7 +235,8 @@ jsPsych.plugins['three-image-slider-response'] = (function() {
     if (trial.prompt !== null){
       html += trial.prompt;
     }
-
+    html += '<output id="output"></output><br> <br>';
+    
     // add submit button
     html += '<button id="jspsych-three-image-slider-response-next" class="jspsych-btn" '+ (trial.require_movement ? "disabled" : "") + '>'+trial.button_label+'</button>';
 
@@ -247,8 +248,11 @@ jsPsych.plugins['three-image-slider-response'] = (function() {
     };
 
     if(trial.require_movement){
+    // adding tracker of slider value in here -- a bit hacky, but i expect require movement to always be on.
       display_element.querySelector('#jspsych-three-image-slider-response-response').addEventListener('change', function(){
         display_element.querySelector('#jspsych-three-image-slider-response-next').disabled = false;
+	var val = document.getElementById("jspsych-three-image-slider-response-response").value //gets the oninput value
+       document.getElementById('output').innerHTML = '<br> You entered: ' + val //displays this value to the html page
       })
     }
 
@@ -296,6 +300,10 @@ jsPsych.plugins['three-image-slider-response'] = (function() {
     }
 
     var startTime = performance.now();
+    
+    
+    
+    
   };
 
   return plugin;

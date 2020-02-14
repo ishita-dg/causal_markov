@@ -21,10 +21,10 @@
 
 
     /* create timeline */
-    N_gs = 20
+    N_gs = 40
     N_qs = 1
     train_trials = N_gs * N_qs
-    test_trials = 20
+    test_trials = 10
     N_trials = test_trials + train_trials
     var N_attempts = 3;
     var attempt = 0;
@@ -117,6 +117,7 @@
 	
     
 
+    /* test trials  */
     
     var all_test_trials = []
     
@@ -137,7 +138,8 @@
           stimulus_height: 300,
           resp_stimulus_height: 120,
           max: 100,
-          labels: ['Left 20x likely', 'Right 20x likely'],
+          labels: ['0', '100'],
+	  /*prompt: 'Slider to the left means left state is more likely, and vice versa. <br>',*/
           start: 50,
           button_label: 'Submit',
           require_movement: true,   
@@ -155,28 +157,6 @@
     };
     
     
-     var eoe_pass = {
-      type: "html-button-response",
-      choices: ["Continue"],
-      stimulus: "This is the end of the questions about causal structure. <br>Press continue to go to the debriefing and feedback section. <br>",
-    };
-    
-    all_test_trials.push(eoe_pass)
-    
-     var eoe_fail = {
-      type: "html-button-response",
-      choices: ["Exit"],
-      stimulus: "You have used up all "+ N_attempts + " attempts to answer comprehension. <br> The experiment is over, press the button to exit. <br>",
-    };
-
-
-
-	// debriefing
-	var debrief_block = {
-			type: 'external-html',
-			url: 'debrief.html',
-			cont_btn: "Continue"
-	};
 
 	// function to save data
 	function saveData(filename, filedata){
@@ -201,11 +181,10 @@
 	
     
     
-    
-    timeline = all_test_trials;
+ 
 
   jsPsych.init({
-    timeline: timeline,
+    timeline: all_test_trials,
 	  on_finish: function(){
 					saveData(subject_id + '.csv', jsPsych.data.get().csv())
 				}
