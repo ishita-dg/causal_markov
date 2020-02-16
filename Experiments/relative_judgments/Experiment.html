@@ -59,13 +59,13 @@
     }
     
     test_probs = [   0.,    0.,    0.,    0.,    3.,    0.,    0.,    0.,    0.,
-          0.,    3.,    0.,    3.,   26.,    3.,    0.,    3.,    0.,
+          0.,    3.,    0.,    3.,   10.,    3.,    0.,    3.,    0.,
           0.,    0.,    0.,    0.,    3.,    0.,    0.,    0.,    0.,
-          0.,    3.,    0.,    3.,   26.,    3.,    0.,    3.,    0.,
-          3.,   26.,    3.,   26.,  205.,   26.,    3.,   26.,    3.,
-          0.,    3.,    0.,    3.,   26.,    3.,    0.,    3.,    0.,
+          0.,    3.,    0.,    3.,   10.,    3.,    0.,    3.,    0.,
+          3.,   10.,    3.,   10.,  333.,   10.,    3.,   10.,    3.,
+          0.,    3.,    0.,    3.,   10.,    3.,    0.,    3.,    0.,
           0.,    0.,    0.,    0.,    3.,    0.,    0.,    0.,    0.,
-          0.,    3.,    0.,    3.,   26.,    3.,    0.,    3.,    0.,
+          0.,    3.,    0.,    3.,   10.,    3.,    0.,    3.,    0.,
           0.,    0.,    0.,    0.,    3.,    0.,    0.,    0.,    0.]
         
     var graphs0 = []    
@@ -91,11 +91,28 @@
     for (var i = 10; i < 55; i++) {
           all_queries = all_queries.concat('draw_querys/Slide' + i);
         }
+	
+    var biased_all_queries = []
+    var q_indices = [03, 05, 09, 15, 17, 21, 23, 27, 33, 35, 04, 06, 10, 16, 18, 22, 24, 28, 34, 36]
+    for (var i = 0; i < 40; i++) {
+	  q_i = i%20; 
+	  q_n = q_indices[q_i];
+          if (q_n < 10){
+	  biased_all_queries = biased_all_queries.concat('draw_querys/Slide0' + q_n);
+	  }
+	  else {
+	  biased_all_queries = biased_all_queries.concat('draw_querys/Slide' + q_n);
+	  }
+        }
+
+    biased_all_queries = biased_all_queries.concat(all_queries)
 
 
     
     var reps = 1 + N_trials / 54;
-    var l_queries = jsPsych.randomization.repeat(all_queries, reps).slice(start = 0, end = N_trials);
+    var train_l_queries = jsPsych.randomization.repeat(all_queries, reps).slice(start = 0, end = train_trials);
+    var test_l_queries = jsPsych.randomization.repeat(biased_all_queries, reps).slice(start = 0, end = test_trials);
+    var l_queries = train_l_queries.concat(test_l_queries)
     
     var r_queries = []
     var new_index = 0
@@ -192,8 +209,7 @@
         'The probabilities of the two different toxins can be <b>mixed</b> in the same individual, for example:'+
         '<br> <img src="draw_instructions/Slide08.png" width="180" height="180", align = "center"></img> <br> Indicates that <b> toxin X is moderately likely to occur </b>  while <b> toxin Y is strongly likely. </b> <br>',
         
-        'Finally, there is some <b> additional noise</b>. <br>'+
-        'The disorder D can sometimes occur (with a <b>20%</b> probability) even when neither of the toxins (X, Y) is present. <br> <b>This remains the same across all individuals </b>, and is shown by the weak arrow pointing to D: <br> <img src="draw_instructions/Slide09.png" width="180" height="180", align = "center"></img> <br>',
+        'Finally, the disorder D can sometimes occur (with a <b>20%</b> probability) even when neither of the toxins (X, Y) is present. <br> <b>This remains the same across all individuals </b>, and is shown by the weak arrow pointing to D: <br> <img src="draw_instructions/Slide09.png" width="180" height="180", align = "center"></img> <br>',
         
         'You will see <b>"causal structures"</b> for different individuals. Individuals vary along two dimensions. First, in how sensitive they are to the different toxins X and Y. This is reflected in different strengths of the causal link between toxin and disorder. Second, they vary in how much exposure they have had to the toxins. This is reflected in how likely the two toxins are to occur. <br> An example causal structure you might see in this experiment is: <br> <img src="draw_instructions/Slide10.png" width="180" height="180", align = "center"></img> <br> <br>'+
         
@@ -241,7 +257,7 @@
       button_label: 'Submit',
       questions: [
         {prompt: "If a toxin is present, then the disorder D will always occur", name: 'prob_c', options: ['True', 'False'], required:true, horizontal: true}, 
-        {prompt: "How many types of causal links are there (that vary in strength) between toxin and disorder?", name: 'types', options: ['1', '2', '3', '4'], required:true, horizontal: true},
+        {prompt: "What are the kinds of causal links between toxin and disorder?", name: 'types', options: ['Strong and very strong', 'Moderate, weak and very weak', 'Weak, moderate, and strong', 'Weak and strong'], required:true, horizontal: true},
         {prompt: "If a toxin does not occur, then the disorder cannot occur", name: 'prob_e', options: ['True', 'False'], required:true, horizontal: true}, 
         {prompt: "A black background in a state means that variable (toxin or disorder) did occur.", name: 'bg', options: ['True', 'False'], required:true, horizontal: true},
         {prompt: "What is your task in this experiment?", name: 'task', options: ['To judge the probability of individual causal structures', 'To judge how probable the toxin X is', 'To judge the probability of toxins and disorders occurring, given an individual causal structure'], required:true},
@@ -259,7 +275,7 @@
     
     function right_answers(data){
     q1 = data['prob_c'] == 'False';
-    q2 = data['types'] == '3';
+    q2 = data['types'] == 'Weak, moderate, and strong';
     q3 = data['prob_e'] == 'False';
     q4 = data['bg'] == 'True';
     q5 = data['task'] == 'To judge the probability of toxins and disorders occurring, given an individual causal structure';
@@ -409,8 +425,10 @@
           stimulus_height: 300,
           resp_stimulus_height: 120,
           max: 100,
+	  trial_number: trial + 1,
+	  total_trial_number: N_trials,
           labels: ['0', '100'],
-	  /*prompt: 'Slider to the left means left state is more likely, and vice versa. <br>',*/
+	  prompt: 'Placing the slider more to the left means that you think the left state is more probable.  <br> <br>',
           start: 50,
           button_label: 'Submit',
           require_movement: true,   

@@ -7,7 +7,7 @@ library(BayesFactor)
 
 setwd("~/GitHub/causal_markov/Experiments/relative_judgments/data")
 
-expt_folder = "pilot1"
+expt_folder = "pilot2"
 
 N_test = 20
 
@@ -44,15 +44,15 @@ val5 = c(17,35)
 
 classify <- function(a){
   if (a %in% val1){
-    return ('val1')
+    return ('P(y1 = 1|y2 = 0)')
   } else if (a %in% val2){
-    return ('val2')
+    return ('P(y1 = 1|y2 = 1)')
   } else if (a %in% val3){
-    return ('val3')
+    return ('P(y1 = 1|y2 = 0, x = 1)')
   }else if (a %in% val4){
-    return ('val4')
+    return ('P(y1 = 1|x = 1)')
   }else if (a %in% val5){
-    return ('val5')
+    return ('P(y1 = 1|y2 = 1, x = 1)')
   }
   else {return ('discard')}
 }
@@ -60,28 +60,43 @@ classify <- function(a){
 df$query_type = sapply(df$query, classify)
 df0 = subset(df, query_type != 'discard')
 
-
-p <- ggplot(df0, aes(x=query_type, y=resp, color=cond)) + 
-  geom_jitter(height = 0.0, width = 0.05) +
-  ylim(-0.1, 1.1)
-
-p
+labs = c('P(y1 = 1|y2 = 0)', 'P(y1 = 1|y2 = 1)', 
+        'P(y1 = 1|y2 = 0, x = 1)', 'P(y1 = 1|x = 1)', 'P(y1 = 1|y2 = 1, x = 1)')
 
 
+remove_outliers <- function(x){
+  return(x[!x %in% boxplot.stats(x)$out])
+}
+
+# d_summ = ddply(df0, .(query_type, cond), summarize, mean = mean(remove_outliers(resp)), sd = sd(remove_outliers(resp)), N = length(remove_outliers(resp)))
 d_summ = ddply(df0, .(query_type, cond), summarize, mean = mean(resp), sd = sd(resp), N = length(resp))
 d_summ$CIs = qnorm(.975)*d_summ$sd/sqrt(d_summ$N)
-
-
+d_true = data.frame(query_type = labs,
+                    cond = c(rep('true', 5)),
+                    mean = c(0.5, 0.5, 0.75, 0.6364, 0.57143),
+                    sd = c(rep(0, 5)),
+                    N = c(rep(1000, 5)),
+                    CIs = c(rep(0, 5)))
+d_summ = rbind(d_summ, d_true)
+d_summ$query_type = factor(d_summ$query_type, levels = labs)
 p <- ggplot(d_summ, aes(x=query_type, y=mean, fill=cond)) + 
   geom_bar(stat="identity", position=position_dodge()) + 
   geom_errorbar(aes(ymin=mean-CIs, ymax=mean+CIs), width=.2,
                 position=position_dodge(.9))+
-  ylim(-0.1, 1.0)
+  scale_fill_manual(values = c("#33cc00", "#CC0000", "#003399"))+
+  ylim(-0.0, 0.8)
 
 p
 
 ggsave(file = paste("conditionals", expt_folder ,".png", sep = ''), p)
- 
+
+# 
+# p <- ggplot(df0, aes(x=query_type, y=resp, color=cond)) + 
+#   geom_jitter(height=0.0, width=0.08) + 
+#   scale_fill_manual(values = c("#33cc00", "#CC0000", "#003399"))+
+#   ylim(-0.0, 0.8)
+#  
+# p
 # ttestBF(subset(df, cond == 'negcorr')$resp, subset(df, cond == 'poscorr')$resp)
 # ttestBF(subset(df, cond == 'negcorr' & symt == 'Sym')$resp, subset(df, cond == 'poscorr' & symt == 'Sym')$resp)
 # ttestBF(subset(df, cond == 'negcorr' & symt == 'Asym')$resp, subset(df, cond == 'poscorr' & symt == 'Asym')$resp)

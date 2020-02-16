@@ -19,6 +19,20 @@ jsPsych.plugins['three-image-slider-response'] = (function() {
     name: 'three-image-slider-response',
     description: '',
     parameters: {
+    trial_number: {
+        type: jsPsych.plugins.parameterType.INT,
+        pretty_name: 'Trial number',
+        default: undefined,
+        description: 'The trial number, for a progress bar'
+      },
+      
+      total_trial_number: {
+        type: jsPsych.plugins.parameterType.INT,
+        pretty_name: 'Total number of trials',
+        default: undefined,
+        description: 'The total number of trials, for a progress bar'
+      },
+      
       stimulus: {
         type: jsPsych.plugins.parameterType.IMAGE,
         pretty_name: 'Stimulus',
@@ -160,6 +174,7 @@ jsPsych.plugins['three-image-slider-response'] = (function() {
 
     var padding = 50;
     var html = '<div id="jspsych-three-image-slider-response-wrapper" style="margin: 0px 0px;">';
+    html += 'Question number ' + trial.trial_number + ' of ' + trial.total_trial_number
     html += '<div id="jspsych-three-image-slider-response-stimulus"> ';
     html += '<img src="'+trial.stimulus+'" style="';
     if(trial.stimulus_height !== null){
@@ -232,10 +247,11 @@ jsPsych.plugins['three-image-slider-response'] = (function() {
     html += '</div>';
     html += '</div>';
 
+  
+    html += '<output id="output"></output><br> <br>';
     if (trial.prompt !== null){
       html += trial.prompt;
     }
-    html += '<output id="output"></output><br> <br>';
     
     // add submit button
     html += '<button id="jspsych-three-image-slider-response-next" class="jspsych-btn" '+ (trial.require_movement ? "disabled" : "") + '>'+trial.button_label+'</button>';
