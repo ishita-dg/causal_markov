@@ -21,11 +21,12 @@
 
 
     /* create timeline */
-    N_gs = 30
+    N_gs = 16
     N_qs = 1
     train_trials = N_gs * N_qs
-    test_trials = 20
+    test_trials = 10
     N_trials = test_trials + train_trials
+    N_feeback = train_trials/2
     var N_attempts = 3;
     var attempt = 0;
     
@@ -133,6 +134,8 @@
         }
 	
     
+     /* determine exact_response[trial] array */
+     
     var timeline = [];
     
     var intro = {
@@ -408,7 +411,7 @@
     var all_test_trials = []
     all_test_trials.push(success)
     
-    for (var trial = 0; trial < N_trials; trial++){
+    for (var trial = 0; trial < N_feedback; trial++){
     
         var view_trial = { 
           type: "image-keyboard-response",
@@ -438,6 +441,74 @@
           data: {"condition": condition, 
 		'stimulus': graphs[trial], 
 		'left_resp_stimulus': l_queries[trial]+'.png',
+		'right_resp_stimulus': r_queries[trial]+'.png',
+		'optimal_response': exact_response[trial]},
+          }
+    
+        all_test_trials.push(response_trial);
+	
+	var part_response = jsPsych.data.get().last(1).values()[0]['response'];
+	
+	var feedback_trial = {
+          type: "three-image-slider-feedback",
+          stimulus_height: 300,
+          resp_stimulus_height: 120,
+          max: 100,
+	  trial_number: trial + 1,
+	  total_trial_number: N_trials,
+          labels: ['0', '100'],
+	  prompt: 'Placing the slider more to the left means that you think the left state is more probable.  <br> <br>',
+          start: part_response,
+	  feedback: exact_response[trial],
+          button_label: 'Next trial',
+          require_movement: true,   
+          stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
+	  left_resp_stimulus: l_queries[trial]+'.png',
+          right_resp_stimulus: r_queries[trial]+'.png',
+          data: {"condition": condition, 
+		'stimulus': graphs[trial], 
+		'left_resp_stimulus': l_queries[trial]+'.png',
+		'right_resp_stimulus': r_queries[trial]+'.png',
+		'optimal_response': exact_response[trial]},
+          }
+	
+	all_test_trials.push(feedback_trial);
+	
+      
+    };
+    
+    for (var trial = N_feedback; trial < N_trials; trial++){
+    
+        var view_trial = { 
+          type: "image-keyboard-response",
+          stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
+          stimulus_height: 300,
+          choices: jsPsych.NO_KEYS, 
+          trial_duration: 2000,
+          }
+          
+        all_test_trials.push(view_trial);
+
+        var response_trial = {
+          type: "three-image-slider-response",
+          stimulus_height: 300,
+          resp_stimulus_height: 120,
+          max: 100,parseInt(graphs[trial].slice(-2)),
+	   						  parseInt(l_queries[trial].slice(-2))
+							  parseInt(r_queries[trial].slice(-2))
+	  trial_number: trial + 1,
+	  total_trial_number: N_trials,
+          labels: ['0', '100'],
+	  prompt: 'Placing the slider more to the left means that you think the left state is more probable.  <br> <br>',
+          start: 50,
+          button_label: 'Submit',
+          require_movement: true,   
+          stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
+	  left_resp_stimulus: l_queries[trial]+'.png',
+          right_resp_stimulus: r_queries[trial]+'.png',
+          data: {"condition": condition, 
+		'stimulus': graphs[trial], 
+		'left_resp_stimulus': l_queries[trial]+'.png',
 		'right_resp_stimulus': r_queries[trial]+'.png'},
           }
     
@@ -445,6 +516,7 @@
       
     };
     
+        
     
      var eoe_pass = {
       type: "html-button-response",

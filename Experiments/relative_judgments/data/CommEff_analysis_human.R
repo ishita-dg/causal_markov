@@ -4,10 +4,20 @@ require(gridExtra)
 library(plyr)
 library(BayesFactor)
 
+get_outliers <- function(x){
+  return(x %in% boxplot.stats(x)$out)
+}
+remove_outliers <- function(x){
+  return(x[!x %in% boxplot.stats(x)$out])
+}
 
 setwd("~/GitHub/causal_markov/Experiments/relative_judgments/data")
 
-expt_folder = "pilot2"
+expt_folder = "pilot2_all"
+
+data_exclusions_outlier = FALSE
+data_exclusion_RT = TRUE
+data_exclusion_o_RT = FALSE
 
 N_test = 20
 
@@ -23,9 +33,24 @@ for (fn in dir(path = expt_folder)){
                    right_query = tail(x$right_resp_stimulus[is.finite(x$response)], N_test),
                    cond = tail(rep(unique(x$condition)[2], each = sum(is.finite(x$response))), N_test),
                    part_num = tail(rep( N_part , each = sum(is.finite(x$response))), N_test),
-                   rt = tail(as.numeric(as.character((x$rt[is.finite(x$response)]))), N_test)
+                   rt = tail(as.numeric(as.character((x$rt[is.finite(x$response)]))), N_test),
+                   trial_number = seq(1, N_test)
   )
   df = rbind(df, df0)
+}
+
+
+if (data_exclusion_RT){
+  df_rts = ddply(df, .(part_num), summarize, mean_rt = mean(rt))
+  exclude = df_rts$mean_rt < 4000
+  # exclude = get_outliers(df_rts$mean_rt)
+  i_exclude = rep(exclude, each = N_test)
+  df = df[!i_exclude,]
+}
+
+if (data_exclusion_o_RT){
+  i_exclude = df$rt < 4000
+  df = df[!i_exclude,]
 }
 
 df$stim = sapply(df$stim,function(x) as.integer((substr(x, 6, 8))))
@@ -58,47 +83,65 @@ classify <- function(a){
 }
 
 df$query_type = sapply(df$query, classify)
-df0 = subset(df, query_type != 'discard')
+df_sub = subset(df, query_type != 'discard')
 
 labs = c('P(y1 = 1|y2 = 0)', 'P(y1 = 1|y2 = 1)', 
         'P(y1 = 1|y2 = 0, x = 1)', 'P(y1 = 1|x = 1)', 'P(y1 = 1|y2 = 1, x = 1)')
+all_labs = c('discard', 'P(y1 = 1|y2 = 0)', 'P(y1 = 1|y2 = 1)', 
+         'P(y1 = 1|y2 = 0, x = 1)', 'P(y1 = 1|x = 1)', 'P(y1 = 1|y2 = 1, x = 1)')
 
+true_vals = c(0.5, 0.5, 0.75, 0.6364, 0.57143)
+all_true_vals = c(NA, 0.5, 0.5, 0.75, 0.6364, 0.57143)
 
-remove_outliers <- function(x){
-  return(x[!x %in% boxplot.stats(x)$out])
+if (data_exclusions_outlier) {
+  d_summ = ddply(df_sub, .(query_type, cond), summarize, mean = mean(remove_outliers(norm_resp)), sd = sd(remove_outliers(norm_resp)), N = length(remove_outliers(norm_resp)))
+}else{
+  d_summ = ddply(df_sub, .(query_type, cond), summarize, mean = mean(norm_resp), sd = sd(norm_resp), N = length(norm_resp))
 }
-
-# d_summ = ddply(df0, .(query_type, cond), summarize, mean = mean(remove_outliers(resp)), sd = sd(remove_outliers(resp)), N = length(remove_outliers(resp)))
-d_summ = ddply(df0, .(query_type, cond), summarize, mean = mean(resp), sd = sd(resp), N = length(resp))
 d_summ$CIs = qnorm(.975)*d_summ$sd/sqrt(d_summ$N)
 d_true = data.frame(query_type = labs,
                     cond = c(rep('true', 5)),
-                    mean = c(0.5, 0.5, 0.75, 0.6364, 0.57143),
+                    mean = true_vals,
                     sd = c(rep(0, 5)),
                     N = c(rep(1000, 5)),
                     CIs = c(rep(0, 5)))
 d_summ = rbind(d_summ, d_true)
 d_summ$query_type = factor(d_summ$query_type, levels = labs)
+d_summ$cond = factor(d_summ$cond, levels = c('negcorr', 'poscorr', 'true'))
 p <- ggplot(d_summ, aes(x=query_type, y=mean, fill=cond)) + 
   geom_bar(stat="identity", position=position_dodge()) + 
   geom_errorbar(aes(ymin=mean-CIs, ymax=mean+CIs), width=.2,
                 position=position_dodge(.9))+
-  scale_fill_manual(values = c("#33cc00", "#CC0000", "#003399"))+
-  ylim(-0.0, 0.8)
+  scale_fill_manual(values = c( "#33cc00","#CC0000","#003399"))+
+  ylim(-0.0, 0.9)
 
 p
 
-ggsave(file = paste("conditionals", expt_folder ,".png", sep = ''), p)
+ggsave(file = paste("conditionals_", expt_folder , ".png", sep = ''), p)
+# ggsave(file = paste("conditionals_", expt_folder ,"ex_out", data_exclusions_outlier, "ex_rt", data_exclusion_RT, ".png", sep = ''), p)
+
+df$true_vals = mapvalues(df$query_type, from = all_labs, to = all_true_vals)
+
 
 # 
-# p <- ggplot(df0, aes(x=query_type, y=resp, color=cond)) + 
-#   geom_jitter(height=0.0, width=0.08) + 
+# p <- ggplot(df_sub, aes(x=query_type, y=norm_resp, color=cond)) +
+#   geom_jitter(height=0.0, width=0.08) +
 #   scale_fill_manual(values = c("#33cc00", "#CC0000", "#003399"))+
-#   ylim(-0.0, 0.8)
-#  
+#   ylim(-0.0, 1.0)
+# 
+# p
+# 
+# p <- ggplot(df_sub, aes(x=query_type, y=norm_resp, color=cond)) +
+#   geom_boxplot() +
+#   ylim(-0.0, 1.0)
+# 
 # p
 # ttestBF(subset(df, cond == 'negcorr')$resp, subset(df, cond == 'poscorr')$resp)
 # ttestBF(subset(df, cond == 'negcorr' & symt == 'Sym')$resp, subset(df, cond == 'poscorr' & symt == 'Sym')$resp)
 # ttestBF(subset(df, cond == 'negcorr' & symt == 'Asym')$resp, subset(df, cond == 'poscorr' & symt == 'Asym')$resp)
 
 
+t.test(subset(df_sub, cond == 'negcorr' & query_type == 'P(y1 = 1|y2 = 0)')$norm_resp, 
+        subset(df_sub, cond == 'negcorr' & query_type == 'P(y1 = 1|y2 = 1)')$norm_resp)
+t.test(subset(df_sub, cond == 'poscorr' & query_type == 'P(y1 = 1|y2 = 0)')$norm_resp, 
+        subset(df_sub, cond == 'poscorr' & query_type == 'P(y1 = 1|y2 = 1)')$norm_resp)
