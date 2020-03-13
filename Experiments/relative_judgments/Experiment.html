@@ -21,12 +21,12 @@
 
 
     /* create timeline */
-    N_gs = 16
+    N_gs = 1
     N_qs = 1
     train_trials = N_gs * N_qs
-    test_trials = 10
+    test_trials = 1
     N_trials = test_trials + train_trials
-    N_feedback = 5
+    N_feedback = 1
     var N_attempts = 3;
     var attempt = 0;
     
@@ -134,57 +134,14 @@
         }
 	
     
-     /* compute / determine exact_response[trial] array */
+     /* compute / determine optimal_response[trial] array */
      
-     var exact_response = [];
+     var optimal_response = [];
      for (var i = 0; i < N_trials; i++) {
-     exact_response.push(i);
+     optimal_response.push(i);
      }
      
-    var timeline = [];
-    
-    var intro = {
-      type: "survey-text",
-      choices: ["Continue"],
-      preamble: "<p> This study is part of a research project conducted by " +
-                "Samuel Gershman, Harvard University.</p>"+
-                "<p> We want to examine people's intuitions about causes and effects.</p>" +
-              "<p>Please enter your MTurk ID and press continue to begin.</p>",
-	      
-  questions: [
-    {prompt: "MTurk ID", name: 'ID', rows: 2, columns: 40, required: true},
-     ],
-    };
-    timeline.push(intro);
-    
-    
-    // consent
-
-	var check_consent = function(elem) {
-		if ($('#consent_checkbox').is(':checked')) {
-			return true;
-		}
-		else {
-			alert("If you wish to participate, you must check the box.");
-			return false;
-		}
-		return false;
-	};
-	
-	var consent_block = {
-		type:'external-html',
-		url: "consent-causal.html",
-		cont_btn: "start",
-		check_fn: check_consent
-	};
-
-    timeline.push(consent_block)
-	
-    var instructions = {
-      type: "instructions",
-      pages: [
-        'Welcome to the experiment. Click next to continue to the instructions.',
-        
+     var instruction_array =  [
 	'In this experiment, you will be playing the role of a doctor trying to judge the effects of toxins on a disorder. This will test your intuitions about cause and effect. <br>',
 	
 	
@@ -252,7 +209,73 @@
         'Once you enter the experiment, you will first see only the causal structure for an individual for 2 seconds.<br> Please use this time to think about what the probabilities of different states might be. <br> <br> Two causal states will then appear, and you will have to enter your judgment of which you think is more likely, on a slider. <br> The slider goes from 0 on the left to 100 on the right, and will start in the middle at 50. Where you place your slider determines how likely you think the states are compared to each other. More to the left means that you think the left state is more likely. More to the right means that you think the right state is more likely. For example, if you think the right state is going to occur 20% of the time, and the left state will occur 80% of the time, then you should place the slider close to the left side, at 20. <br> Please take into account all the factors in the causal structure (the <b>strengths of the causal links between toxin and disorder</b>, as well as <b>the probability of a toxin occurring</b>) when making your judgment, and try to be as accurate as possible.<br>',
         
         'On the next page you will see a few comprehension questions. <br> You will not be able to progress to the experiment until you answer the questions correctly. <br> If you answer incorrectly you will be redirected to a summary of the instructions. <br> You will get 3 attempts to answer the comprehension questions correctly.<br> '
-    ],
+    ]
+     
+
+    function compute_bonus(data){
+	optimal = data.select('optimal_response')['values'].slice(start = N_feedback);
+	empirical = data.select('response')['values'].slice(start = 2*N_feedback);
+	
+	var error_sum = 0;
+	length = optimal.length;
+	max_error_sum = length * 10000
+	random_error_sum = length * 10000 / 6
+	while (length--) {
+	    error = parseInt(optimal[length]) - parseInt(empirical[length])
+	   error_sum += Math.pow(error, 2);
+	}
+	var norm_error_sum  = error_sum / random_error_sum
+	var perf = Math.max((1.0 - norm_error_sum), 0)
+	var max_bonus = 1.00
+	
+	
+	return Math.round(max_bonus * perf * 100) / 100 
+    }
+     
+     /* Starting experiment code */
+     
+    var timeline = [];
+    
+    var intro = {
+      type: "survey-text",
+      choices: ["Continue"],
+      preamble: "<p> This study is part of a research project conducted by " +
+                "Samuel Gershman, Harvard University.</p>"+
+                "<p> We want to examine people's intuitions about causes and effects.</p>" +
+              "<p>Please enter your MTurk ID and press continue to begin.</p>",
+	      
+  questions: [
+    {prompt: "MTurk ID", name: 'ID', rows: 2, columns: 40, required: true},
+     ],
+    };
+    timeline.push(intro);
+    
+    
+    // consent
+
+	var check_consent = function(elem) {
+		if ($('#consent_checkbox').is(':checked')) {
+			return true;
+		}
+		else {
+			alert("If you wish to participate, you must check the box.");
+			return false;
+		}
+		return false;
+	};
+	
+	var consent_block = {
+		type:'external-html',
+		url: "consent-causal.html",
+		cont_btn: "start",
+		check_fn: check_consent
+	};
+
+    timeline.push(consent_block)
+	
+    var instructions = {
+      type: "instructions",
+      pages: instruction_array,
     show_clickable_nav: true
     };
     
@@ -273,12 +296,6 @@
     };
     
     timeline.push(comprehension);
-    
-    
-    function right_answers2(q1, q2, q3, q4, q5){
-    right = (q1 && q2 && q3 && q4 && q5);
-    return right;
-    }
     
     
     function right_answers(data){
@@ -309,79 +326,7 @@
     
     var short_instructions = {
       type: "instructions",
-      pages: [
-        
-        
-        'In this experiment, you will be playing the role of a doctor trying to judge the effect of a toxin on the presence of a disorder. This will test your intuitions about cause and effect. <br><hr> <hr>' +
-	
-	
-	'There are two kinds of toxins (X and Y) that can cause a disorder D.<br>'+
-        'X causes D is represented with a link from X to D as follows: <br> <img src="draw_instructions/Slide02.png" width="150" height="150", align = "center"></img><br> ' +
-        'Both X and Y can independently cause disorder D. This is indicated as follows: <br>'+
-        '<img src="draw_instructions/Slide12.png" width="150" height="150", align = "center"></img><br>'+
-        'If both toxins (X and Y) are present, then D is more likely to occur than if only one or none of the toxins are present.<br> <hr> <hr>' +
-	
-        'The presence of a toxin (X or Y) does not guarantee that the disorder D will occur. <br> It only increases the probability that D will occur.<br>'+ 
-        'How much this probability increases is determined by the <b>strength of the link between the toxin and the disorder</b>. <br> The strength of this link can vary from individual to individual, depending on their sensitivities to the different toxins. <br>This strength is indicated by the type of arrow between the toxin and the disorder. <hr> <hr>' +
-        
-        'The three kinds of causal links between toxin and disorder are: <br> <img src="draw_instructions/Slide01.png" width="150" height="150", align = "center"></img> <b>Weak</b> link. <br> Everytime the toxin occurs, the disorder has a <b>20%</b> probability of ocurring.'+
-        '<hr> <img src="draw_instructions/Slide02.png" width="150" height="150", align = "center"></img> <b>Moderate</b> link. <br>Everytime the toxin occurs, the disorder has a <b>50%</b> probability of ocurring.' +
-        '<hr> <img src="draw_instructions/Slide03.png" width="150" height="150", align = "center"></img> <b>Strong</b> link.<br> Everytime the toxin occurs, the disorder has a <b>80%</b> probability of ocurring. <br>'+
-	'<br> Toxin Y can also weakly, moderately, or strongly cause the disorder D, and is indicated by the same kinds of arrows as above.<hr> <hr>' +
-        
-        'The strength of causal links can be <b>mixed</b> for the same individual, for example:'+
-        '<br> <img src="draw_instructions/Slide04.png" width="180" height="180", align = "center"></img> <br> Indicates <b> in this individual, toxin X strongly causes the disorder D </b> and <b> toxin Y only weakly causes the disorder D </b>. <br><hr> <hr>' +
-         
-         'The two toxins (X and Y) also do not always occur. Different individuals have different levels of exposure to these two toxins, and the toxins therefore have different probabilities of occurring. <br>'+
-         
-	'The <b>probability of each toxin</b> occurring is independent, and is indicated by <br> the type of arrows pointing to it.<hr> <hr>' + 
-        
-        'The three types of arrows have similar meanings here : <br> <img src="draw_instructions/Slide05.png" width="150" height="150", align = "center"></img> <b>Weak</b> probability of occurrence. <br> The toxin has a <b>20%</b> probability of occurring.<hr>'+
-        '<img src="draw_instructions/Slide06.png" width="150" height="150", align = "center"></img> <b>Moderate</b> probability of occurrence. <br> The toxin has a <b>50%</b> probability of occurring.<hr>' +
-        '<img src="draw_instructions/Slide07.png" width="150" height="150", align = "center"></img> <b>Strong</b> probability of occurrence. <br> The toxin has a <b>80%</b> probability of occurring. <br>'+
-	'<br> Toxin Y also has strong, moderate or weak probability of occurrence, and is indicated by the same kinds of arrows as above.<hr> <hr>' +
-        
-        'The probabilities of the two different toxins can be <b>mixed</b> in the same individual, for example:'+
-        '<br> <img src="draw_instructions/Slide08.png" width="180" height="180", align = "center"></img> <br> Indicates that <b> toxin X is moderately likely to occur </b>  while <b> toxin Y is strongly likely. </b> <br><hr> <hr>' +
-        
-        'Finally, there is some <b> additional noise</b>. <br>'+
-        'The disorder D can sometimes occur (with a <b>20%</b> probability) even when neither of the toxins (X, Y) is present. <br> <b>This remains the same across all individuals </b>, and is shown by the weak arrow pointing to D: <br> <img src="draw_instructions/Slide09.png" width="180" height="180", align = "center"></img> <br><hr> <hr>' +
-        
-        'You will see <b>"causal structures"</b> for different individuals. Individuals vary along two dimensions. First, in how sensitive they are to the different toxins X and Y. This is reflected in different strengths of the causal link between toxin and disorder. Second, they vary in how much exposure they have had to toxins X and Y. This is reflected in how likely the two toxins are to occur. <br> An example causal structure you might see in this experiment is: <br> <img src="draw_instructions/Slide10.png" width="180" height="180", align = "center"></img> <br> <br>'+
-        
-        'Given this, you will have to make judgments about the probability that the toxins X and Y, or the disorder D, are present. <br> This is described in the next section.<hr> <hr>' +
-	
-	 'You will be shown two images of possible states, like the one below: <br> <br>'+
-        '<img src="draw_querys/Slide12.png" width="120" height="120", align = "center"></img>  <br> <br>'+
-        '<b>Black indicates that a variable ocurred, white indicates it did not occur.</b><br>'+
-	'In this example, therefore, the toxin X was found to be present, while toxin Y was absent. Disorder D was also absent. <br>'+
-        'Your task is to guess which of two displayed states is more likely, given your knowledge of the "causal structure" for that individual. <br><hr> <hr>' +
-	
-	
-        'We first go through a few examples.<hr> <hr>' +
-        
-        'For an individual with causal structure : <img src="draw_stimuli/Slide81.png" width="180" height="180", align = "center"></img> <br>'+
-        '<img src="draw_querys/Slide18.png" width="120" height="120", align = "center"></img> is much more probable than <img src="draw_querys/Slide11.png" width="120" height="120", align = "center"></img><hr> <hr>' +
-        
-        
-        'For an individual with causal structure : <img src="draw_stimuli/Slide36.png" width="180" height="180", align = "center"></img> <br>'+
-        '<img src="draw_querys/Slide12.png" width="120" height="120", align = "center"></img> is more probable than <img src="draw_querys/Slide11.png" width="120" height="120", align = "center"></img>, <br> but they are both less probable than <img src="draw_querys/Slide16.png" width="120" height="120", align = "center"></img><hr> <hr>' +
-	
-	'Sometimes, you will not have to reason about the probabilities of all three variables (X, Y and D) but only some subset of them. For example: <br> <br>'+
-        '<img src="draw_querys/Slide37.png" width="120" height="120", align = "center"></img>  <br> <br>'+
-	'Here, we do not know anything about whether the toxins X and Y were present, we just know that the disorder D did not occur. <br><hr> <hr>' +
-        
-        'For an individual with causal structure : <img src="draw_stimuli/Slide81.png" width="180" height="180", align = "center"></img> <br>'+
-	'Even if we do not know for sure whether the toxins were present, we know they are likely to occur, and that when they occur, they strongly cause the disorder D <br>'+
-        'Therefore, this individual is very likely to have the disorder overall, and <img src="draw_querys/Slide38.png" width="120" height="120", align = "center"></img> is much more probable than <img src="draw_querys/Slide37.png" width="120" height="120", align = "center"></img><hr> <hr>' +
-
-	
-        'Once you enter the experiment, you will first see only the causal structure for an individual for 2 seconds.<br> Please use this time to think about what the probabilities of different states might be. <br> <br> Two causal states will then appear, and you will have to enter your judgment of which you think is more likely, on a slider. <br> The slider goes from 0 on the left to 100 on the right, and will start in the middle at 50. Where you place your slider determines how likely you think the states are compared to each other. More to the left means that you think the left state is more likely. More to the right means that you think the right state is more likely. For example, if you think the right state is going to occur 20% of the time, and the left state will occur 80% of the time, then you should place the slider close to the left side, at 20.<br>'+
-	
-	'Please take into account all the factors in the causal structure (the <b>strengths of the causal links between toxin and disorder</b>, as well as <b>the probability of a toxin occurring</b>) when making your judgment, and try to be as accurate as possible.<br><hr> <hr>' +
-	
-        '<b>You will have to answer a few comprehension questions on the next page before starting the experiment. </b>'
-    ],
+      pages: [instruction_array.join('<br> <hr> <hr>')],
     show_clickable_nav: true
     };
     
@@ -438,7 +383,7 @@
 	  trial_id: 'Practice ' + t_n,
 	  total_trial_number: N_feedback,
           labels: ['0', '100'],
-	  prompt: 'Placing the slider more to the left means that you think the left state is more probable.  <br> ',
+	  prompt: 'Place slider to the left to indicate the left state is more probable. <br> ',
           start: 50,
           button_label: 'Submit',
           check_input: -1,   
@@ -449,7 +394,7 @@
 		'stimulus': graphs[trial], 
 		'left_resp_stimulus': l_queries[trial]+'.png',
 		'right_resp_stimulus': r_queries[trial]+'.png',
-		'optimal_response': exact_response[trial]},
+		'optimal_response': optimal_response[trial]},
           }
     
         all_test_trials.push(response_trial);
@@ -465,14 +410,14 @@
 	  trial_id: 'Practice ' + t_n,
 	  total_trial_number: N_feedback,
           labels: ['0', '100'],
-	  prompt: 'The correct answer is: ' + exact_response[trial] + '<br>'+
+	  prompt: 'The correct answer is: ' + optimal_response[trial] + '<br>'+
 	  'Please move the slider to the correct answer to move on <br>',
           start: function (){
 		  var part_response = jsPsych.data.get().last(1).values()[0]['response'];
 		  return part_response
 		},
           button_label: 'Continue',
-          check_input: exact_response[trial],   
+          check_input: optimal_response[trial],   
           stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
 	  left_resp_stimulus: l_queries[trial]+'.png',
           right_resp_stimulus: r_queries[trial]+'.png',
@@ -513,7 +458,7 @@
 	  trial_id: 'Question ' +  t_n,
 	  total_trial_number: N_trials - N_feedback,
           labels: ['0', '100'],
-	  prompt: 'Placing the slider more to the left means that you think the left state is more probable.  <br> <br>',
+	  prompt:  'Place slider to the left to indicate the left state is more probable. <br> ',
           start: 50,
           button_label: 'Submit',
           check_input: -1,   
@@ -524,7 +469,7 @@
 		'stimulus': graphs[trial], 
 		'left_resp_stimulus': l_queries[trial]+'.png',
 		'right_resp_stimulus': r_queries[trial]+'.png',
-		'optimal_response': exact_response[trial]},
+		'optimal_response': optimal_response[trial]},
           }
     
         all_test_trials.push(response_trial);
@@ -536,7 +481,13 @@
      var eoe_pass = {
       type: "html-button-response",
       choices: ["Continue"],
-      stimulus: "This is the end of the questions about causal structure. <br>Press continue to go to the debriefing and feedback section. <br>",
+      stimulus: function (){
+	var bonus = compute_bonus(jsPsych.data.get()) 
+	var eoe_string = 'This is the end of the questions about causal structure. <br>'+
+	'You have earned a bonus of $'+ bonus + ' based on your responses. <br>'+
+	'Press continue to go to the debriefing and feedback section. <br>'
+	return eoe_string
+      },
     };
     
     all_test_trials.push(eoe_pass)
