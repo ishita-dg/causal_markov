@@ -484,10 +484,11 @@
       stimulus: function (){
 	var bonus = compute_bonus(jsPsych.data.get()) 
 	var eoe_string = 'This is the end of the questions about causal structure. <br>'+
-	'You have earned a bonus of $'+ bonus + ' based on your responses. <br>'+
+	'You have earned a <b> bonus of $'+ bonus + '</b> based on your responses. <br>'+
 	'Press continue to go to the debriefing and feedback section. <br>'
 	return eoe_string
       },
+      data: {"bonus": bonus},
     };
     
     all_test_trials.push(eoe_pass)
