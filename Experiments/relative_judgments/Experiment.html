@@ -7,8 +7,8 @@
          <script src="jspsych-6.1.0_used/plugins/jspsych-survey-text.js"></script>
          <script src="jspsych-6.1.0_used/plugins/jspsych-survey-multi-choice.js"></script>
          <script src="jspsych-6.1.0_used/plugins/jspsych-html-keyboard-response.js"></script>         
-         <script src="jspsych-6.1.0_used/plugins/jspsych-html-button-response.js"></script>         
-	 <script src="jspsych-6.1.0_used/plugins/jspsych-instructions.js"></script>
+         <script src="jspsych-6.1.0_used/plugins/jspsych-html-button-response.js"></script>     
+	 <script src="jspsych-6.1.0_used/plugins/jspsych-instructions.js"></script> 
          <script src="jspsych-6.1.0_used/custom_plugins/jspsych-three-image-slider-response.js"></script>
 	<script src="jspsych-6.1.0_used/plugins/jspsych-external-html.js"></script>
          <script src="jspsych-6.1.0_used/plugins/jspsych-image-keyboard-response.js"></script>
@@ -26,7 +26,7 @@
     train_trials = N_gs * N_qs
     test_trials = 10
     N_trials = test_trials + train_trials
-    N_feeback = train_trials/2
+    N_feedback = 5
     var N_attempts = 3;
     var attempt = 0;
     
@@ -134,7 +134,12 @@
         }
 	
     
-     /* determine exact_response[trial] array */
+     /* compute / determine exact_response[trial] array */
+     
+     var exact_response = [];
+     for (var i = 0; i < N_trials; i++) {
+     exact_response.push(i);
+     }
      
     var timeline = [];
     
@@ -251,7 +256,7 @@
     show_clickable_nav: true
     };
     
-    timeline.push(instructions);
+    /*timeline.push(instructions);*/
     
     
     var comprehension = {
@@ -413,6 +418,8 @@
     
     for (var trial = 0; trial < N_feedback; trial++){
     
+	var t_n = trial + 1;
+    
         var view_trial = { 
           type: "image-keyboard-response",
           stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
@@ -428,13 +435,13 @@
           stimulus_height: 300,
           resp_stimulus_height: 120,
           max: 100,
-	  trial_number: trial + 1,
-	  total_trial_number: N_trials,
+	  trial_id: 'Practice ' + t_n,
+	  total_trial_number: N_feedback,
           labels: ['0', '100'],
-	  prompt: 'Placing the slider more to the left means that you think the left state is more probable.  <br> <br>',
+	  prompt: 'Placing the slider more to the left means that you think the left state is more probable.  <br> ',
           start: 50,
           button_label: 'Submit',
-          require_movement: true,   
+          check_input: -1,   
           stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
 	  left_resp_stimulus: l_queries[trial]+'.png',
           right_resp_stimulus: r_queries[trial]+'.png',
@@ -447,29 +454,28 @@
     
         all_test_trials.push(response_trial);
 	
-	var part_response = jsPsych.data.get().last(1).values()[0]['response'];
+	console.log(jsPsych.data.get().last(1).values()[0])
+	
 	
 	var feedback_trial = {
-          type: "three-image-slider-feedback",
+          type: "three-image-slider-response",
           stimulus_height: 300,
           resp_stimulus_height: 120,
           max: 100,
-	  trial_number: trial + 1,
-	  total_trial_number: N_trials,
+	  trial_id: 'Practice ' + t_n,
+	  total_trial_number: N_feedback,
           labels: ['0', '100'],
-	  prompt: 'Placing the slider more to the left means that you think the left state is more probable.  <br> <br>',
-          start: part_response,
-	  feedback: exact_response[trial],
-          button_label: 'Next trial',
-          require_movement: true,   
+	  prompt: 'The correct answer is: ' + exact_response[trial] + '<br>'+
+	  'Please move the slider to the correct answer to move on <br>',
+          start: function (){
+		  var part_response = jsPsych.data.get().last(1).values()[0]['response'];
+		  return part_response
+		},
+          button_label: 'Continue',
+          check_input: exact_response[trial],   
           stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
 	  left_resp_stimulus: l_queries[trial]+'.png',
           right_resp_stimulus: r_queries[trial]+'.png',
-          data: {"condition": condition, 
-		'stimulus': graphs[trial], 
-		'left_resp_stimulus': l_queries[trial]+'.png',
-		'right_resp_stimulus': r_queries[trial]+'.png',
-		'optimal_response': exact_response[trial]},
           }
 	
 	all_test_trials.push(feedback_trial);
@@ -477,8 +483,18 @@
       
     };
     
-    for (var trial = N_feedback; trial < N_trials; trial++){
+    var transition_trial = {
+	type: 'html-button-response',
+	stimulus: '<p>This is the end of the practice section. <br> You will no longer be given feedback for your responses for the next trials, but you will earn a bonus based on how close your responses are close to the correct response. <br> Please try to be as accurate as possible.</p>',
+	choices: ['Continue'],
+    };
     
+    all_test_trials.push(transition_trial);
+    
+    for (var trial = N_feedback; trial < N_trials; trial++){
+	
+	var t_n = trial + 1 - N_feedback;
+	    
         var view_trial = { 
           type: "image-keyboard-response",
           stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
@@ -493,23 +509,22 @@
           type: "three-image-slider-response",
           stimulus_height: 300,
           resp_stimulus_height: 120,
-          max: 100,parseInt(graphs[trial].slice(-2)),
-	   						  parseInt(l_queries[trial].slice(-2))
-							  parseInt(r_queries[trial].slice(-2))
-	  trial_number: trial + 1,
-	  total_trial_number: N_trials,
+          max: 100,
+	  trial_id: 'Question ' +  t_n,
+	  total_trial_number: N_trials - N_feedback,
           labels: ['0', '100'],
 	  prompt: 'Placing the slider more to the left means that you think the left state is more probable.  <br> <br>',
           start: 50,
           button_label: 'Submit',
-          require_movement: true,   
+          check_input: -1,   
           stimulus: 'draw_stimuli/'+graphs[trial]+'.png',
 	  left_resp_stimulus: l_queries[trial]+'.png',
           right_resp_stimulus: r_queries[trial]+'.png',
           data: {"condition": condition, 
 		'stimulus': graphs[trial], 
 		'left_resp_stimulus': l_queries[trial]+'.png',
-		'right_resp_stimulus': r_queries[trial]+'.png'},
+		'right_resp_stimulus': r_queries[trial]+'.png',
+		'optimal_response': exact_response[trial]},
           }
     
         all_test_trials.push(response_trial);

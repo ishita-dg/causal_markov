@@ -19,11 +19,11 @@ jsPsych.plugins['three-image-slider-response'] = (function() {
     name: 'three-image-slider-response',
     description: '',
     parameters: {
-    trial_number: {
-        type: jsPsych.plugins.parameterType.INT,
-        pretty_name: 'Trial number',
+    trial_id: {
+        type: jsPsych.plugins.parameterType.STRING,
+        pretty_name: 'Trial ID',
         default: undefined,
-        description: 'The trial number, for a progress bar'
+        description: 'The trial ID, for a progress bar'
       },
       
       total_trial_number: {
@@ -136,11 +136,11 @@ jsPsych.plugins['three-image-slider-response'] = (function() {
         array: false,
         description: 'Label of the button to advance.'
       },
-      require_movement: {
-        type: jsPsych.plugins.parameterType.BOOL,
-        pretty_name: 'Require movement',
+      check_input: {
+        type: jsPsych.plugins.parameterType.INT,
+        pretty_name: 'Require movement to this value',
         default: false,
-        description: 'If true, the participant will have to move the slider before continuing.'
+        description: 'If in the slider range, the participant will have to move the slider to this value before continuing.'
       },
       prompt: {
         type: jsPsych.plugins.parameterType.STRING,
@@ -174,7 +174,7 @@ jsPsych.plugins['three-image-slider-response'] = (function() {
 
     var padding = 50;
     var html = '<div id="jspsych-three-image-slider-response-wrapper" style="margin: 0px 0px;">';
-    html += 'Question number ' + trial.trial_number + ' of ' + trial.total_trial_number
+    html += trial.trial_id + ' of ' + trial.total_trial_number
     html += '<div id="jspsych-three-image-slider-response-stimulus"> ';
     html += '<img src="'+trial.stimulus+'" style="';
     if(trial.stimulus_height !== null){
@@ -248,13 +248,13 @@ jsPsych.plugins['three-image-slider-response'] = (function() {
     html += '</div>';
 
   
-    html += '<output id="output"></output><br> <br>';
+    html += '<output id="output"></output><br>';
     if (trial.prompt !== null){
       html += trial.prompt;
     }
     
-    // add submit button
-    html += '<button id="jspsych-three-image-slider-response-next" class="jspsych-btn" '+ (trial.require_movement ? "disabled" : "") + '>'+trial.button_label+'</button>';
+    // add submit button, initially disabled
+    html += '<button id="jspsych-three-image-slider-response-next" class="jspsych-btn">'+trial.button_label+'</button>';
 
     display_element.innerHTML = html;
 
@@ -262,15 +262,27 @@ jsPsych.plugins['three-image-slider-response'] = (function() {
       rt: null,
       response: null
     };
-
-    if(trial.require_movement){
-    // adding tracker of slider value in here -- a bit hacky, but i expect require movement to always be on.
+    
+    display_element.querySelector('#jspsych-three-image-slider-response-next').disabled = true;
+    
+     var val = document.getElementById("jspsych-three-image-slider-response-response").value //gets the oninput value
+     document.getElementById('output').innerHTML = 'You entered: ' + val //displays this value to the html page
+	   
+    
+     // adding tracker of slider value
       display_element.querySelector('#jspsych-three-image-slider-response-response').addEventListener('change', function(){
-        display_element.querySelector('#jspsych-three-image-slider-response-next').disabled = false;
-	var val = document.getElementById("jspsych-three-image-slider-response-response").value //gets the oninput value
-       document.getElementById('output').innerHTML = '<br> You entered: ' + val //displays this value to the html page
+	    var val = document.getElementById("jspsych-three-image-slider-response-response").value //gets the oninput value
+	   document.getElementById('output').innerHTML = 'You entered: ' + val //displays this value to the html page
+	   
+	   // Enable submit
+	  if(trial.check_input < 0){
+	      display_element.querySelector('#jspsych-three-image-slider-response-next').disabled = false;
+	  } else if (trial.check_input == val) {
+	      display_element.querySelector('#jspsych-three-image-slider-response-next').disabled = false;
+	  }
+       
       })
-    }
+
 
     display_element.querySelector('#jspsych-three-image-slider-response-next').addEventListener('click', function() {
       // measure response time
