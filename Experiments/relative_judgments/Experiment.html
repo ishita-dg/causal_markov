@@ -2,6 +2,7 @@
 <html>
     <head>
         <title>My experiment</title>
+	<script src="optimal_response.js"></script>
         <script src="jspsych-6.1.0_used/jspsych.js"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
          <script src="jspsych-6.1.0_used/plugins/jspsych-survey-text.js"></script>
@@ -138,7 +139,9 @@
      
      var optimal_response = [];
      for (var i = 0; i < N_trials; i++) {
-     optimal_response.push(i);
+	index = parseInt(graphs[i].slice(-2)) * 54 + parseInt(l_queries[i].slice(-2)) - 55
+	opt_resp = get_opt_resp(index);
+	optimal_response.push(opt_resp);
      }
      
      var instruction_array =  [
@@ -488,7 +491,8 @@
 	'Press continue to go to the debriefing and feedback section. <br>'
 	return eoe_string
       },
-      data: {"bonus": bonus},
+      data: {"bonus": function (){
+	var bonus = compute_bonus(jsPsych.data.get()) }},
     };
     
     all_test_trials.push(eoe_pass)
